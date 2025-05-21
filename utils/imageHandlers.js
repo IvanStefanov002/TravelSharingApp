@@ -14,6 +14,7 @@ export const pickImage = async (
   setMessage,
   setMessageType
 ) => {
+  console.log("PickImage start...");
   try {
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
@@ -38,7 +39,11 @@ export const pickImage = async (
   } catch (error) {
     console.error("Error picking image:", error);
     Alert.alert("An error occurred while picking the image.");
+
+    return false;
   }
+
+  return true;
 };
 
 export const pickImageTrip = async (
@@ -76,44 +81,6 @@ export const pickImageTrip = async (
   }
 };
 
-/*
-export const pickImage = async (
-  updateImageState, // this will be a callback like setVehicleInfo or setTripData mapper
-  route,
-  setMessage,
-  setMessageType
-) => {
-  try {
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      quality: 1,
-    });
-
-    if (!result.canceled) {
-      const imageUrl = result.assets[0].uri;
-
-      console.log(imageUrl);
-      // Let the caller define how to update their state
-      updateImageState(imageUrl);
-
-      await uploadImageToServer(
-        imageUrl,
-        "",
-        route?.params?.email,
-        setMessage,
-        setMessageType,
-        updateImageState
-      );
-    } else {
-      Alert.alert("You did not select any image.");
-    }
-  } catch (error) {
-    console.error("Error picking image:", error);
-    Alert.alert("An error occurred while picking the image.");
-  }
-};
-*/
-
 /**
  * Handles replacing an existing image and uploading the new one.
  */
@@ -124,6 +91,8 @@ export const changeImage = async (
   setMessage,
   setMessageType
 ) => {
+  console.log("ChangeImage start...");
+
   try {
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
@@ -135,7 +104,7 @@ export const changeImage = async (
       const newImageUrl = result.assets[0].uri;
       setVehicleInfo((prev) => ({ ...prev, imageUrl: newImageUrl }));
 
-      await uploadImageToServer(
+      const uploadedImageUrl = await uploadImageToServer(
         newImageUrl,
         imageFileName,
         route?.params?.email,
@@ -143,13 +112,21 @@ export const changeImage = async (
         setMessageType,
         setVehicleInfo
       );
+
+      //setVehicleInfo((prev) => ({ ...prev, imageUrl: uploadedImageUrl }));
+
+      vehicleInfo.imageUrl = uploadedImageUrl;
     } else {
       Alert.alert("You did not select any image.");
     }
   } catch (error) {
     console.error("Error changing image:", error);
     Alert.alert("An error occurred while changing the image.");
+
+    return false;
   }
+
+  return true;
 };
 
 /**

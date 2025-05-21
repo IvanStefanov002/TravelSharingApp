@@ -139,7 +139,7 @@ const AboutVehicle = ({ route, navigation }) => {
           }}
         >
           {!vehicleInfo.imageUrl ||
-          vehicleInfo.imageUrl === `${baseAPIUrl}/uploads/no_image.jpeg` ? (
+          vehicleInfo.imageUrl.includes("no_image") ? (
             <Button
               title="Add Image"
               onPress={() =>

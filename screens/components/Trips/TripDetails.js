@@ -4,10 +4,14 @@ import { useRoute } from "@react-navigation/native";
 import axios from "axios";
 import React, { useEffect, useState } from "react";
 
+import { updateTripStatus } from "@/utils/updateTripStatus";
+import { updateUserRating } from "@/utils/updateUserRating";
+
 import {
+  Alert,
   Image,
+  Modal,
   ScrollView,
-  StatusBar,
   Text,
   TouchableOpacity,
   View,
@@ -30,20 +34,24 @@ import {
 } from "./../../../components/styles";
 
 export default function TripDetails({ navigation }) {
-  <StatusBar
-    backgroundColor="transparent"
-    barStyle="dark-content"
-    translucent
-  />;
+  // <StatusBar
+  //   backgroundColor="transparent"
+  //   translucent
+  // />;
 
   const route = useRoute();
   const { tripData } = route.params;
+  const { loggedUserId } = route.params;
 
   const [trip, setTrip] = useState(tripData || {}); /* safe aproach */
   const [driver, setDriver] = useState(trip?.driver || {}); /* safe aproach */
   const [passengerInfo, setPassengerInfo] = useState({});
   const [showPassengerList, setShowPassengerList] = useState(false);
   const [expandedPassenger, setExpandedPassenger] = useState(null);
+
+  /* for ratings */
+  const [showRatingModal, setShowRatingModal] = useState(false);
+  const [selectedRating, setSelectedRating] = useState(null);
 
   /* for card options */
   const [expandedSection, setExpandedSection] = useState(null);
@@ -70,6 +78,25 @@ export default function TripDetails({ navigation }) {
 
   const toggleSection = (id) => {
     setExpandedSection((prev) => (prev === id ? null : id));
+  };
+
+  const handleFinishTrip = async () => {
+    const result = await updateTripStatus(trip._id, "finished");
+
+    if (result.success) {
+      Alert.alert("Success", result.message, [
+        {
+          text: "OK",
+          onPress: () =>
+            navigation.navigate("HomeTabs", {
+              screen: "Trips",
+              params: { activeTab: "explore" },
+            }),
+        },
+      ]);
+    } else {
+      Alert.alert("Error", result.message);
+    }
   };
 
   const section = {
@@ -101,7 +128,7 @@ export default function TripDetails({ navigation }) {
           }}
         >
           {/* Text above the image */}
-          <Text
+          {/* <Text
             style={{
               color: "#111827",
               fontWeight: "bold",
@@ -110,12 +137,13 @@ export default function TripDetails({ navigation }) {
               paddingRight: 20,
               paddingBottom: 10,
               paddingLeft: 20,
-              borderRadius: 8,
+              borderTopLeftRadius: 12,
+              borderTopRightRadius: 12,
               zIndex: 1,
             }}
           >
-            Image of the vehicle you would travel with:
-          </Text>
+            Vehicle image
+          </Text> */}
 
           {/* Image below the text */}
           {trip && trip.vehicle_image ? (
@@ -123,10 +151,12 @@ export default function TripDetails({ navigation }) {
               source={{ uri: trip.vehicle_image }}
               style={{
                 width: "100%",
-                height: 200,
-                borderRadius: 12,
-                marginTop: 5,
+                height: 300,
+                borderBottomRightRadius: 12,
+                borderBottomLeftRadius: 12,
+                marginTop: 0,
               }}
+              resizeMode="contain"
             />
           ) : (
             <Image
@@ -164,13 +194,15 @@ export default function TripDetails({ navigation }) {
           </PriceContainer>
         </TripLocationAndPriceContainer>
 
-        <TripContainer>
+        <TripContainer
+          style={{ borderBottomLeftRadius: 0, borderBottomRightRadius: 0 }}
+        >
           <TripAvailableSeats>
             <Text
               style={{
                 textAlign: "left",
-                fontSize: 16, // Optional: Adjust the font size
-                fontWeight: "bold", // Optional: Makes text bold for emphasis
+                fontSize: 16,
+                fontWeight: 600,
               }}
             >
               Description:
@@ -178,12 +210,127 @@ export default function TripDetails({ navigation }) {
           </TripAvailableSeats>
         </TripContainer>
 
-        <TripDetailsDescription>{trip.trip_description}</TripDetailsDescription>
+        <View
+          style={{
+            backgroundColor: "#f9fafb",
+            borderBottomLeftRadius: 8,
+            borderBottomRightRadius: 8,
+            marginBottom: 10,
+            borderWidth: 1,
+            borderColor: "#e5e7eb",
+          }}
+        >
+          <TripDetailsDescription>
+            {trip.trip_description}
+          </TripDetailsDescription>
+        </View>
+
+        <TripContainer style={{ borderWidth: 1, borderColor: "#e5e7eb" }}>
+          <TripAvailableSeats
+            style={{
+              textAlign: "left",
+              fontSize: 16,
+              fontWeight: 600,
+            }}
+          >
+            Available Seats: {trip.available_seats}
+          </TripAvailableSeats>
+        </TripContainer>
+
+        {/* Taken Seats Toggle */}
+        <TouchableOpacity
+          onPress={() => setShowPassengerList((prev) => !prev)}
+          style={{
+            marginTop: 10,
+            marginBottom: 10,
+            backgroundColor: "lightgray",
+            paddingVertical: 14,
+            paddingHorizontal: 16,
+            borderRadius: 12,
+            flexDirection: "row",
+            alignItems: "center",
+            justifyContent: "space-between",
+            borderWidth: 1,
+            borderColor: "#e5e7eb",
+          }}
+        >
+          <Text style={{ fontWeight: 600, fontSize: 16 }}>
+            Taken Seats: {trip.taken_seats?.length || 0}
+          </Text>
+          <Ionicons
+            name={
+              showPassengerList ? "chevron-up-outline" : "chevron-down-outline"
+            }
+            size={20}
+            color="#4b5563"
+          />
+        </TouchableOpacity>
+
+        {showPassengerList && (
+          <View style={{ marginTop: 10, marginBottom: 10 }}>
+            <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 10 }}>
+              {trip.taken_seats?.map((id, index) => {
+                const user = passengerInfo[id];
+                return (
+                  <TouchableOpacity
+                    key={index}
+                    onPress={() =>
+                      setExpandedPassenger((prev) => (prev === id ? null : id))
+                    }
+                    style={{
+                      alignItems: "center",
+                      marginRight: 10,
+                      marginBottom: 10,
+                    }}
+                  >
+                    <Image
+                      source={{
+                        uri:
+                          user?.profile_image ??
+                          "https://via.placeholder.com/100x100.png?text=User",
+                      }}
+                      style={{
+                        width: 60,
+                        height: 60,
+                        borderRadius: 30,
+                        borderWidth: 2,
+                        borderColor: "#6d28d9",
+                      }}
+                    />
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+
+            {/* Information Box - shown below the avatars when clicked */}
+            {expandedPassenger && passengerInfo[expandedPassenger] && (
+              <View
+                style={{
+                  marginTop: 10,
+                  backgroundColor: "#fde68a",
+                  padding: 15,
+                  borderRadius: 8,
+                  width: "100%",
+                }}
+              >
+                <Text style={{ fontWeight: "bold" }}>
+                  Name: {passengerInfo[expandedPassenger]?.name}
+                </Text>
+                <Text>
+                  Email: {passengerInfo[expandedPassenger]?.credentials.email}
+                </Text>
+                <Text>
+                  Phone: {passengerInfo[expandedPassenger]?.credentials.phone}
+                </Text>
+              </View>
+            )}
+          </View>
+        )}
 
         <View
           key={section.id}
           style={{
-            marginBottom: 15,
+            marginBottom: 10,
             backgroundColor: "#f9fafb",
             borderRadius: 12,
             borderWidth: 1,
@@ -289,107 +436,6 @@ export default function TripDetails({ navigation }) {
           )}
         </View>
 
-        <TripContainer>
-          <TripAvailableSeats>
-            <Text
-              style={{
-                textAlign: "left",
-                fontSize: 16, // Optional: Adjust the font size
-                fontWeight: "bold", // Optional: Makes text bold for emphasis
-              }}
-            >
-              Available Seats: {trip.available_seats}
-            </Text>
-          </TripAvailableSeats>
-        </TripContainer>
-
-        {/* Taken Seats Toggle */}
-        <TouchableOpacity
-          onPress={() => setShowPassengerList((prev) => !prev)}
-          style={{
-            marginTop: 10,
-            backgroundColor: "lightgray",
-            paddingVertical: 14,
-            paddingHorizontal: 16,
-            borderRadius: 12,
-            flexDirection: "row",
-            alignItems: "center",
-            justifyContent: "space-between",
-          }}
-        >
-          <Text style={{ fontWeight: "bold", fontSize: 16 }}>
-            Taken Seats: {trip.taken_seats?.length || 0}
-          </Text>
-          <Ionicons
-            name={
-              showPassengerList ? "chevron-up-outline" : "chevron-down-outline"
-            }
-            size={20}
-            color="#4b5563"
-          />
-        </TouchableOpacity>
-
-        {showPassengerList && (
-          <View style={{ marginTop: 10 }}>
-            <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 10 }}>
-              {trip.taken_seats?.map((id, index) => {
-                const user = passengerInfo[id];
-                return (
-                  <TouchableOpacity
-                    key={index}
-                    onPress={() =>
-                      setExpandedPassenger((prev) => (prev === id ? null : id))
-                    }
-                    style={{
-                      alignItems: "center",
-                      marginRight: 10,
-                      marginBottom: 10,
-                    }}
-                  >
-                    <Image
-                      source={{
-                        uri:
-                          user?.profile_image ??
-                          "https://via.placeholder.com/100x100.png?text=User",
-                      }}
-                      style={{
-                        width: 60,
-                        height: 60,
-                        borderRadius: 30,
-                        borderWidth: 2,
-                        borderColor: "#6d28d9",
-                      }}
-                    />
-                  </TouchableOpacity>
-                );
-              })}
-            </View>
-
-            {/* Information Box - shown below the avatars when clicked */}
-            {expandedPassenger && passengerInfo[expandedPassenger] && (
-              <View
-                style={{
-                  marginTop: 10,
-                  backgroundColor: "lightgray",
-                  padding: 15,
-                  borderRadius: 8,
-                  width: "100%",
-                }}
-              >
-                <Text style={{ fontWeight: "bold" }}>
-                  Name: {passengerInfo[expandedPassenger]?.name}
-                </Text>
-                <Text>
-                  Email: {passengerInfo[expandedPassenger]?.credentials.email}
-                </Text>
-                <Text>
-                  Phone: {passengerInfo[expandedPassenger]?.credentials.phone}
-                </Text>
-              </View>
-            )}
-          </View>
-        )}
-
         {/* Driver Information */}
         {driver && (
           <ContactInfoContainer style={{ marginTop: 32 }}>
@@ -449,19 +495,164 @@ export default function TripDetails({ navigation }) {
           </ContactInfoContainer>
         )}
 
-        <TouchableOpacity
-          style={{
-            marginTop: 20,
-            backgroundColor: "#6d28d9",
-            padding: 15,
-            borderRadius: 10,
-          }}
-          onPress={() => navigation.navigate("Booking", { tripId: trip._id })}
+        {loggedUserId !== trip.driver_id ? (
+          // Non-driver user buttons
+          <View
+            style={{
+              display: "flex",
+              flexDirection: "row",
+              justifyContent: "space-evenly",
+            }}
+          >
+            <TouchableOpacity
+              style={{
+                height: 50,
+                width: 150,
+                marginTop: 20,
+                backgroundColor: "#6d28d9",
+                padding: 15,
+                borderRadius: 10,
+              }}
+              onPress={() => setShowRatingModal(true)}
+            >
+              <Text style={{ color: "white", textAlign: "center" }}>
+                Rate Driver
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={{
+                height: 50,
+                width: 150,
+                marginTop: 20,
+                backgroundColor: "#facc15",
+                padding: 15,
+                borderRadius: 10,
+              }}
+              onPress={() =>
+                navigation.navigate("Booking", { tripId: trip._id })
+              }
+            >
+              <Text style={{ color: "white", textAlign: "center" }}>
+                Book This Trip
+              </Text>
+            </TouchableOpacity>
+          </View>
+        ) : loggedUserId === trip.driver_id &&
+          trip.article_status !== "finished" ? (
+          // Driver and article is not finished → show archive
+          <View
+            style={{
+              display: "flex",
+              flexDirection: "row",
+              justifyContent: "space-evenly",
+            }}
+          >
+            <TouchableOpacity
+              style={{
+                height: 50,
+                width: 150,
+                marginTop: 20,
+                backgroundColor: "red",
+                padding: 15,
+                borderRadius: 10,
+              }}
+              onPress={handleFinishTrip}
+            >
+              <Text style={{ color: "white", textAlign: "center" }}>
+                Archive Article
+              </Text>
+            </TouchableOpacity>
+          </View>
+        ) : null}
+
+        <Modal
+          visible={showRatingModal}
+          transparent={true}
+          animationType="slide"
+          onRequestClose={() => setShowRatingModal(false)}
         >
-          <Text style={{ color: "white", textAlign: "center" }}>
-            Book This Trip
-          </Text>
-        </TouchableOpacity>
+          <View
+            style={{
+              flex: 1,
+              backgroundColor: "rgba(0,0,0,0.5)",
+              justifyContent: "center",
+              alignItems: "center",
+            }}
+          >
+            <View
+              style={{
+                backgroundColor: "white",
+                padding: 20,
+                borderRadius: 10,
+                alignItems: "center",
+                width: 250,
+              }}
+            >
+              <Text style={{ fontSize: 18, marginBottom: 10 }}>
+                Rate the Driver
+              </Text>
+              <View style={{ flexDirection: "row", marginBottom: 20 }}>
+                {[1, 2, 3, 4, 5].map((num) => (
+                  <TouchableOpacity
+                    key={num}
+                    onPress={() => setSelectedRating(num)}
+                    style={{
+                      margin: 5,
+                      padding: 10,
+                      backgroundColor:
+                        selectedRating === num ? "#6d28d9" : "#e5e7eb",
+                      borderRadius: 5,
+                    }}
+                  >
+                    <Text
+                      style={{
+                        color: selectedRating === num ? "white" : "#111827",
+                      }}
+                    >
+                      {num}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+
+              <TouchableOpacity
+                style={{
+                  backgroundColor: "#6d28d9",
+                  paddingVertical: 10,
+                  paddingHorizontal: 20,
+                  borderRadius: 5,
+                }}
+                onPress={async () => {
+                  const newAverageRating =
+                    (selectedRating + driver.ratings.average) / 2;
+
+                  /* insure average rating is max 5 */
+                  if (newAverageRating > 5.0) {
+                    newAverageRating = 5.0;
+                  }
+
+                  const result = await updateUserRating(
+                    driver._id,
+                    newAverageRating,
+                    driver.ratings.count + 1
+                  );
+
+                  console.log(result);
+
+                  if (result == "SUCCESS") {
+                    /* update driver's rating and count for this screen */
+                    driver.ratings.average = newAverageRating;
+                    driver.ratings.count += 1;
+                  }
+                  setShowRatingModal(false);
+                }}
+              >
+                <Text style={{ color: "white" }}>Submit</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </Modal>
       </TripDetailsContainer>
     </ScrollView>
   );

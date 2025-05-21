@@ -1,295 +1,200 @@
-import { useFocusEffect } from "@react-navigation/native"; // Import useFocusEffect
+import { useFocusEffect } from "@react-navigation/native";
 import axios from "axios";
-import * as ImagePicker from "expo-image-picker"; // Expo Image Picker
-import React, { useCallback, useState } from "react";
-import { Button, ScrollView, StatusBar, View } from "react-native";
+import { useCallback, useState } from "react";
+import { StatusBar } from "react-native";
 import { baseAPIUrl } from "../../../components/shared";
 
+import { Line } from "@/components/styles";
 import {
-  Line,
-  VehicleCard,
-  VehicleContainer,
-  VehicleImage,
-  VehicleLabel,
-  VehicleRow,
-  VehicleTitle,
-  VehicleValue,
-} from "../../../components/styles";
+  ActivityIndicator,
+  Image,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+} from "react-native";
 
-const AboutVehicle = ({ route, navigation }) => {
-  StatusBar.setHidden(false);
+const TripHistory = ({ route }) => {
+  StatusBar.setHidden(true);
 
-  const [vehicleInfo, setVehicleInfo] = useState({
-    make: "",
-    model: "",
-    year: "",
-    color: "",
-    plate: "",
-    mileage: "",
-    fuelType: "",
-    transmissionType: "",
-    ratings: { average: 0, count: 0 },
-    imageUrl: "", // To hold the image URI
-  });
+  const userId = route?.params?.id ?? "undefined";
+
+  const [trips, setTrips] = useState([]);
+  const [isLoading, setIsLoading] = useState(false);
+
   const [message, setMessage] = useState("");
   const [messageType, setMessageType] = useState("FAILED");
 
-  // Handle messages
-  const handleMessage = (message, type = "FAILED") => {
-    setMessage(message);
-    setMessageType(type);
-  };
-
-  // Fetch vehicle information
-  const fetchVehicleInfo = async (email) => {
-    const url = `${baseAPIUrl}/users/fetchVehicleInfo`;
-
-    try {
-      const response = await axios.post(url, { email });
-      const { statusText, message, data } = response.data;
-
-      if (statusText !== "SUCCESS") {
-        handleMessage(message, "FAILED");
-      } else {
-        const { car, ratings } = data[0];
-
-        const imageUrl = car.image_url.replace(
-          "http://localhost:3000",
-          baseAPIUrl
-        );
-
-        setVehicleInfo({
-          make: car.make,
-          model: car.model,
-          year: car.year,
-          color: car.color,
-          plate: car.plate,
-          mileage: car.mileage,
-          fuelType: car.fuel_type,
-          transmissionType: car.transmission,
-          ratings: ratings ?? { average: 0, count: 0 },
-          imageUrl: imageUrl || "",
-        });
-        handleMessage("Vehicle info loaded", "SUCCESS");
-      }
-    } catch (error) {
-      console.error("Fetch error:", error);
-      handleMessage(
-        error.response?.data?.message || "Fetch vehicle info failed",
-        "FAILED"
-      );
-    }
-  };
+  const [hostedTrips, setHostedTrips] = useState([]);
+  const [joinedTrips, setJoinedTrips] = useState([]);
 
   // Fetch data when screen is focused
   useFocusEffect(
     useCallback(() => {
-      if (route?.params?.email) {
-        fetchVehicleInfo(route.params.email);
-      }
-    }, [route?.params?.email])
+      const fetchTrips = async () => {
+        try {
+          setIsLoading(true);
+
+          const response = await axios.get(
+            `${baseAPIUrl}/trips/fetchData/${userId}`
+          );
+
+          const trips = response.data.map((trip) => {
+            if (trip.departure_datetime) {
+              trip.departure_datetime = trip.departure_datetime
+                .replace("T", " ")
+                .replace("Z", "");
+            }
+
+            if (trip.vehicle_image) {
+              trip.vehicle_image = trip.vehicle_image.replace(
+                "http://localhost:3000",
+                baseAPIUrl
+              );
+            }
+
+            return trip;
+          });
+
+          // Categorize trips
+          const hosted = trips.filter((trip) => trip.driver_id === userId);
+          const joined = trips.filter((trip) =>
+            trip.taken_seats?.includes(userId)
+          );
+
+          setHostedTrips(hosted);
+          setJoinedTrips(joined);
+        } catch (error) {
+          console.error("Error fetching trips:", error.message);
+          setMessage("Error loading trips.");
+        } finally {
+          setIsLoading(false);
+        }
+      };
+
+      fetchTrips();
+    }, [route.params?.activeTab])
   );
 
-  // Function to pick image from the gallery
-  const pickImage = async () => {
-    let result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      quality: 1,
-    });
-
-    if (!result.canceled) {
-      const imageUrl = result.assets[0].uri;
-      setVehicleInfo((prevState) => ({ ...prevState, imageUrl }));
-
-      // You can now upload this image to the server
-      uploadImageToServer(imageUrl, "");
-    } else {
-      Alert.alert("You did not select any image.");
-    }
-  };
-
-  const changeImage = async () => {
-    let result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      quality: 1,
-    });
-
-    if (!result.canceled) {
-      const imageFileName = vehicleInfo.imageUrl.split("/").pop();
-      const newImageUrl = result.assets[0].uri;
-      setVehicleInfo((prevState) => ({ ...prevState, newImageUrl }));
-
-      // You can now upload this image to the server
-      uploadImageToServer(newImageUrl, imageFileName);
-    } else {
-      Alert.alert("You did not select any image.");
-    }
-  };
-
-  // Function to upload the image to your server
-  const uploadImageToServer = async (imageUrl, imageFileName) => {
-    const formData = new FormData();
-    const uriParts = imageUrl.split(".");
-    const fileType = uriParts[uriParts.length - 1]; // Get file extension
-
-    const response = await fetch(imageUrl);
-    const blob = await response.blob();
-
-    formData.append("email", route?.params?.email);
-    formData.append("oldImage", imageFileName);
-    formData.append("image", {
-      uri: imageUrl,
-      name: `vehicle_image.${fileType}`,
-      type: `image/${fileType}`,
-    });
-
-    try {
-      const response = await axios.post(
-        `${baseAPIUrl}/upload/image`,
-        formData,
-        {
-          headers: {
-            "Content-Type": "multipart/form-data",
-          },
-        }
-      );
-
-      if (response.data.statusText === "SUCCESS") {
-        handleMessage("Image uploaded successfully", "SUCCESS");
-
-        /* swap localhost with actual ip */
-        const imageUrl = response.data.imageUrl.replace(
-          "http://localhost:3000",
-          baseAPIUrl
-        );
-        updateVehicleImageUrl(imageUrl);
-      } else {
-        handleMessage("Image upload failed", "FAILED");
-      }
-    } catch (error) {
-      console.error("Upload error:", error);
-      handleMessage("Image upload error", "FAILED");
-    }
-  };
-
-  // Function to update the vehicle info with the image URL
-  const updateVehicleImageUrl = (imageUrl) => {
-    setVehicleInfo((prevState) => ({
-      ...prevState,
-      imageUrl: imageUrl,
-    }));
-
-    // Optionally update this on the server as well, if needed
-    // Example: You can send a PUT request to update the vehicle info
-  };
-
   return (
-    <ScrollView>
-      <VehicleContainer>
-        <View
-          style={{
-            alignItems: "center",
-          }}
-        >
-          <VehicleTitle>Vehicle Information</VehicleTitle>
-        </View>
-        <View
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            //alignItems: "center", // Centers the image and button horizontally
-          }}
-        >
-          {vehicleInfo.imageUrl ? (
-            <VehicleImage
-              source={{ uri: vehicleInfo.imageUrl }}
-              style={{
-                width: "100%", // Make the image take up max width
-                maxWidth: 320, // Set max width to 300 or any desired value
-                aspectRatio: 2, // Define aspect ratio (width:height ratio) for rectangular shape
-              }}
-            />
+    <ScrollView contentContainerStyle={styles.container}>
+      {isLoading ? (
+        <ActivityIndicator size="large" color="#6d28d9" />
+      ) : (
+        <>
+          {/* Hosted Trips */}
+          <Text style={styles.sectionTitle}>Trips You've Hosted</Text>
+          <Line></Line>
+          {hostedTrips.length > 0 ? (
+            hostedTrips.map((trip) => (
+              <View style={styles.card} key={trip._id}>
+                <Image
+                  source={{ uri: trip.vehicle_image }}
+                  style={styles.image}
+                />
+                <View style={styles.details}>
+                  <Text style={styles.title}>{trip.title}</Text>
+                  <Text style={styles.meta}>
+                    Direction: {trip.start_location.city} →{" "}
+                    {trip.end_location.city}
+                  </Text>
+                  <Text style={styles.meta}>
+                    Departure: {trip.departure_datetime}
+                  </Text>
+                </View>
+              </View>
+            ))
           ) : (
-            <VehicleImage
-              source={require("../../../assets/images/logo.png")}
-              style={{
-                width: "100%",
-                maxWidth: 300,
-                aspectRatio: 2,
-              }}
-            />
+            <Text style={styles.emptyText}>No hosted trips found.</Text>
           )}
-        </View>
 
-        <View
-          style={{
-            display: "flex",
-            flexDirection: "row",
-            justifyContent: "space-around",
-          }}
-        >
-          {!vehicleInfo.imageUrl || vehicleInfo.imageUrl === "logo.png" ? (
-            <Button title="Add Image" onPress={pickImage} />
+          {/* Participated Trips */}
+          <Text style={styles.sectionTitle}>Trips You've Participated In</Text>
+          <Line></Line>
+          {joinedTrips.length > 0 ? (
+            joinedTrips.map((trip) => (
+              <View style={styles.card} key={trip._id}>
+                <Image
+                  source={{ uri: trip.vehicle_image }}
+                  style={styles.image}
+                />
+                <View style={styles.details}>
+                  <Text style={styles.title}>{trip.title}</Text>
+                  {/* <Text>{trip.trip_description}</Text> */}
+                  <Text style={styles.meta}>
+                    Direction: {trip.start_location.city} →{" "}
+                    {trip.end_location.city}
+                  </Text>
+                  <Text style={styles.meta}>
+                    Departure: {trip.departure_datetime}
+                  </Text>
+                  {/* <Text style={styles.meta}>
+                    Driver Rating: {trip.rating ?? "N/A"}
+                  </Text> */}
+                </View>
+              </View>
+            ))
           ) : (
-            <>
-              <Button title="Change Image" onPress={changeImage} />
-              <Button title="Delete Image" onPress={changeImage} />
-            </>
+            <Text style={styles.emptyText}>No participated trips found.</Text>
           )}
-        </View>
-
-        <VehicleCard>
-          <VehicleRow>
-            <VehicleLabel>Make:</VehicleLabel>
-            <VehicleValue>{vehicleInfo.make}</VehicleValue>
-          </VehicleRow>
-
-          <VehicleRow>
-            <VehicleLabel>Model:</VehicleLabel>
-            <VehicleValue>{vehicleInfo.model}</VehicleValue>
-          </VehicleRow>
-
-          <VehicleRow>
-            <VehicleLabel>Year:</VehicleLabel>
-            <VehicleValue>{vehicleInfo.year}</VehicleValue>
-          </VehicleRow>
-
-          <VehicleRow>
-            <VehicleLabel>Color:</VehicleLabel>
-            <VehicleValue>{vehicleInfo.color}</VehicleValue>
-          </VehicleRow>
-
-          <VehicleRow>
-            <VehicleLabel>Plate:</VehicleLabel>
-            <VehicleValue>{vehicleInfo.plate}</VehicleValue>
-          </VehicleRow>
-
-          <VehicleRow>
-            <VehicleLabel>Mileage:</VehicleLabel>
-            <VehicleValue>{vehicleInfo.mileage} km</VehicleValue>
-          </VehicleRow>
-
-          <VehicleRow>
-            <VehicleLabel>Fuel Type:</VehicleLabel>
-            <VehicleValue>{vehicleInfo.fuelType}</VehicleValue>
-          </VehicleRow>
-
-          <VehicleRow>
-            <VehicleLabel>Transmission:</VehicleLabel>
-            <VehicleValue>{vehicleInfo.transmissionType}</VehicleValue>
-          </VehicleRow>
-
-          <Line />
-
-          <VehicleLabel>Average rating:</VehicleLabel>
-          <VehicleValue>{vehicleInfo.ratings.average}</VehicleValue>
-
-          <VehicleLabel>Ratings count:</VehicleLabel>
-          <VehicleValue>{vehicleInfo.ratings.count}</VehicleValue>
-        </VehicleCard>
-      </VehicleContainer>
+        </>
+      )}
     </ScrollView>
   );
 };
 
-export default AboutVehicle;
+const styles = StyleSheet.create({
+  container: {
+    padding: 15,
+    paddingTop: 70,
+    backgroundColor: "#f9f9f9",
+  },
+  sectionTitle: {
+    fontSize: 20,
+    fontWeight: "bold",
+    marginTop: 20,
+    color: "#333",
+    alignSelf: "center",
+  },
+  card: {
+    flexDirection: "row",
+    backgroundColor: "#fff",
+    marginBottom: 15,
+    borderRadius: 10,
+    overflow: "hidden",
+    shadowColor: "#000",
+    shadowOpacity: 0.1,
+    shadowRadius: 5,
+    elevation: 3,
+  },
+  image: {
+    width: 150,
+    height: 150,
+    //resizeMode: "stretch",
+    resizeMode: "contain",
+  },
+  details: {
+    flex: 1,
+    padding: 12,
+    justifyContent: "center",
+  },
+  title: {
+    fontSize: 16,
+    fontWeight: "600",
+    marginBottom: 5,
+  },
+  meta: {
+    fontSize: 14,
+    color: "#666",
+    marginTop: 2,
+    fontWeight: 500,
+  },
+  emptyText: {
+    color: "#888",
+    fontStyle: "italic",
+    marginBottom: 10,
+    textAlign: "center",
+  },
+});
+
+export default TripHistory;

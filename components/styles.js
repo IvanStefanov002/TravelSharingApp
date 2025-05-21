@@ -254,7 +254,7 @@ export const Header = styled.View`
 
 export const WelcomeText = styled.Text`
   font-size: 24px;
-  font-weight: bold;
+  font-weight: 400;
   color: #333;
 `;
 
@@ -506,6 +506,7 @@ export const TripTitle = styled.Text`
   font-size: 20px;
   font-weight: bold;
   margin-bottom: 12px;
+  align-self: center;
 `;
 
 export const TripDetailsDescription = styled.Text`
@@ -518,7 +519,7 @@ export const TripDetailsDescription = styled.Text`
 import { Ionicons } from "@expo/vector-icons";
 
 export const TripLocationAndPriceContainer = styled.View`
-  flex-direction: row;
+  flex-direction: column;
   justify-content: space-between;
   align-items: center;
   padding-horizontal: 10px;

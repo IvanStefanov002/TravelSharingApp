@@ -14,6 +14,8 @@ import {
 
 const { primary } = Colors;
 
+import { useFocusEffect } from "@react-navigation/native";
+import { useCallback, useState } from "react";
 import Home from "../screens/components/Home/Home";
 import More from "../screens/components/More/More";
 import Profile from "../screens/components/Profile/Profile";
@@ -21,24 +23,50 @@ import Trips from "../screens/components/Trips/Trips";
 
 const Tab = createBottomTabNavigator();
 
-const CustomHeader = ({ name, email, imageUri }) => (
-  <HeaderContainer>
-    <ProfileImage source={imageUri} />
-    <TextGroup>
-      <NameText>{name}</NameText>
-      <EmailText>{email}</EmailText>
-    </TextGroup>
-  </HeaderContainer>
-);
+const CustomHeader = ({ name, email, imageUri }) => {
+  const source =
+    typeof imageUri === "string" && imageUri.length > 0
+      ? { uri: imageUri }
+      : imageUri;
+
+  return (
+    <HeaderContainer>
+      <ProfileImage source={source} />
+      <TextGroup>
+        <NameText>{name}</NameText>
+        <EmailText>{email}</EmailText>
+      </TextGroup>
+    </HeaderContainer>
+  );
+};
 
 const HomeTabs = ({ route }) => {
-  const id = route?.params?.id ?? "0";
+  console.log(`inside HomeTabs id`, route?.params?.id);
+  console.log(`inside HomeTabs email`, route?.params?.email);
+  const id = route?.params?.id ?? "";
   const photoUrl = route?.params?.profileImage ?? "";
-  const name = route?.params?.name ?? "John Doe";
-  const email = route?.params?.email ?? "john@example.com";
-  const rating = route?.params?.rating;
-  const tripsCount = route?.params?.tripsCount;
+  const name = route?.params?.name ?? "";
+  const email = route?.params?.email ?? "";
   const roles = route?.params?.roles;
+
+  const [headerData, setHeaderData] = useState({
+    name: route?.params?.name ?? "",
+    email: route?.params?.email ?? "",
+    photo: route?.params?.profileImage ?? "",
+  });
+
+  useFocusEffect(
+    useCallback(() => {
+      setHeaderData({
+        name: route?.params?.name ?? "",
+        email: route?.params?.email ?? "",
+        photo: route?.params?.profileImage ?? "",
+      });
+    }, [route?.params])
+  );
+
+  console.log(`inside HomeTabs id 2`, id);
+  console.log(`inside HomeTabs email 2`, email);
 
   return (
     <>
@@ -91,30 +119,31 @@ const HomeTabs = ({ route }) => {
           headerTitle: () => {
             if (route.name === "More") {
               return (
-                <Text style={{ fontSize: 16, fontWeight: "bold" }}>
+                <Text style={{ fontSize: 20, fontWeight: "600" }}>
                   Additional Information
                 </Text>
               );
             } else if (route.name === "Profile") {
               return (
-                <Text style={{ fontSize: 16, fontWeight: "bold" }}>
+                <Text style={{ fontSize: 20, fontWeight: "600" }}>
                   Profile Settings
                 </Text>
               );
             } else {
               return (
                 <CustomHeader
-                  name={name}
-                  email={email}
+                  name={headerData.name || "Guest"}
+                  email={headerData.email || "guest@example.com"}
                   imageUri={
-                    photoUrl
-                      ? { uri: photoUrl }
+                    headerData.photo
+                      ? headerData.photo
                       : require("./../assets/images/logo.png")
                   }
                 />
               );
             }
           },
+
           headerTitleAlign:
             route.name === "More" ||
             route.name === "Profile" ||
@@ -127,6 +156,10 @@ const HomeTabs = ({ route }) => {
         <Tab.Screen
           name="Home"
           component={Home}
+          initialParams={{
+            id,
+            name,
+          }}
           options={{
             headerStyle: {
               backgroundColor: "#facc15",
@@ -153,13 +186,12 @@ const HomeTabs = ({ route }) => {
           name="Profile"
           component={Profile}
           initialParams={{
+            id,
             name,
             email,
             photoUrl: photoUrl
-              ? { uri: photoUrl }
-              : require("./../assets/images/logo.png"),
-            rating,
-            tripsCount,
+              ? photoUrl
+              : require("./../assets/images/no_image.jpeg"),
             roles,
           }}
           options={{

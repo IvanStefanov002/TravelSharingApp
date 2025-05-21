@@ -1,4 +1,5 @@
 import { baseAPIUrl } from "@/components/shared";
+import { fetchUserDataById } from "@/utils/fetchUserDataById";
 import { Ionicons } from "@expo/vector-icons";
 import { useFocusEffect } from "@react-navigation/native";
 import axios from "axios";
@@ -22,25 +23,50 @@ import {
 const screenWidth = Dimensions.get("window").width;
 
 export default function Home({ route, navigation }) {
+  const { tempId } = route.params || {};
+  const id = route?.params?.id ?? tempId;
+
   const [appStats, setAppStats] = useState({
     totalUsers: 0,
     totalTrips: 0,
     totalPassengers: 0,
   });
 
+  const [user, setUser] = useState({
+    id: "",
+    name: "",
+    roles: "",
+    email: "",
+    photoUrl: "",
+  });
+
   useFocusEffect(
     useCallback(() => {
-      const fetchStats = async () => {
+      const fetchData = async () => {
         try {
+          // Fetch user data
+          const userData = await fetchUserDataById(id); // make sure this is async if needed
+
+          const mappedUserData = {
+            id: userData._id,
+            name: userData.name,
+            roles: userData.roles,
+            email: userData.credentials.email,
+            photoUrl: userData.profile_image,
+          };
+
+          setUser(mappedUserData);
+
+          // Fetch app stats
           const response = await axios.get(`${baseAPIUrl}/stats/summary`);
           setAppStats(response.data);
         } catch (error) {
-          console.error("Failed to fetch app stats:", error);
+          console.error("Error fetching data:", error);
         }
       };
 
-      fetchStats();
-    }, [])
+      fetchData();
+    }, [id]) // Include `id` as a dependency
   );
 
   const chartData = {
@@ -58,7 +84,10 @@ export default function Home({ route, navigation }) {
       <HomeContainer>
         <Header>
           <WelcomeText>
-            Welcome back, {route?.params?.name || "Traveler"}
+            Welcome back,{" "}
+            <WelcomeText style={{ fontWeight: 600 }}>
+              {user.name.split(" ")[0] || "Traveler"}
+            </WelcomeText>
           </WelcomeText>
         </Header>
 

@@ -15,6 +15,7 @@ import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import AboutVehicle from "../screens/components/Profile/AboutVehicle";
 import Ratings from "../screens/components/Profile/Ratings";
 import Security from "../screens/components/Profile/Security";
+import TripHistory from "../screens/components/Profile/TripHistory";
 import Verification from "../screens/LinkVerification";
 import Login from "./../screens/Login";
 import Signup from "./../screens/Signup";
@@ -59,9 +60,10 @@ const RootStack = () => {
               headerTransparent: false,
               headerShadowVisible: false,
               headerStyle: {
-                backgroundColor: "lightgray",
+                backgroundColor: "#facc15",
+                statusBarStyle: "light",
               },
-              statusBarHidden: true,
+              statusBarHidden: false,
             }}
           />
 
@@ -72,10 +74,23 @@ const RootStack = () => {
             component={Security}
             options={{
               title: "Security Settings",
-              headerTintColor: "#6d28d9",
+              headerTintColor: "black",
               headerStyle: {
                 backgroundColor: "#facc15",
               },
+            }}
+          />
+
+          <Stack.Screen
+            name="TripHistory"
+            component={TripHistory}
+            options={{
+              title: "Your trips overview",
+              headerTintColor: "black",
+              headerStyle: {
+                backgroundColor: "#facc15",
+              },
+              statusBarStyle: "light",
             }}
           />
 

@@ -19,6 +19,7 @@ export const uploadImageToServer = async (
   setMessageType,
   setVehicleInfo
 ) => {
+  let uploadedUrl = "";
   const formData = new FormData();
   const uriParts = imageUrl.split(".");
   const fileType = uriParts[uriParts.length - 1];
@@ -47,7 +48,7 @@ export const uploadImageToServer = async (
     );
 
     if (uploadRes.data.statusText === "SUCCESS") {
-      const uploadedUrl = uploadRes.data.imageUrl.replace(
+      uploadedUrl = uploadRes.data.imageUrl.replace(
         "http://localhost:3000",
         baseAPIUrl
       );
@@ -60,13 +61,17 @@ export const uploadImageToServer = async (
       }
 
       // 3. Update user with new image URL
-      const updateRes = await axios.post(`${baseAPIUrl}/upload/updateUser`, {
-        email,
-        imageUrl: uploadedUrl,
-      });
+      const updateRes = await axios.post(
+        `${baseAPIUrl}/upload/updateUserImage`,
+        {
+          email,
+          imageUrl: uploadedUrl,
+        }
+      );
 
       if (updateRes.data.statusText === "SUCCESS") {
         // Update local state with new image url
+
         setVehicleInfo((prevState) => ({
           ...prevState,
           imageUrl: uploadedUrl,
@@ -99,56 +104,7 @@ export const uploadImageToServer = async (
     handleMessage(setMessage, setMessageType, "Image upload error", "FAILED");
   }
 
-  // try {
-  //   console.log(formData);
-  //   const res = await axios.post(`${baseAPIUrl}/upload/uploadImage`, formData, {
-  //     headers: {
-  //       "Content-Type": "multipart/form-data",
-  //     },
-  //   });
-
-  //   try {
-  //     if (imageFileName !== "") {
-  //       res = await axios.post(`${baseAPIUrl}/upload/deleteImage`, {
-  //         image: imageFileName,
-  //       });
-  //     }
-
-  //     res = await axios.post(`${baseAPIUrl}/upload/updateUser`, {
-  //       email,
-  //     });
-  //   } catch (error) {}
-
-  //   if (res.data.statusText === "SUCCESS") {
-  //     const uploadedUrl = res.data.imageUrl.replace(
-  //       "http://localhost:3000",
-  //       baseAPIUrl
-  //     );
-
-  //     // Update state
-  //     setVehicleInfo((prevState) => ({
-  //       ...prevState,
-  //       imageUrl: uploadedUrl,
-  //     }));
-
-  //     handleMessage(
-  //       setMessage,
-  //       setMessageType,
-  //       "Image uploaded successfully",
-  //       "SUCCESS"
-  //     );
-  //   } else {
-  //     handleMessage(
-  //       setMessage,
-  //       setMessageType,
-  //       "Image upload failed",
-  //       "FAILED"
-  //     );
-  //   }
-  // } catch (error) {
-  //   console.error("Upload error:", error);
-  //   handleMessage(setMessage, setMessageType, "Image upload error", "FAILED");
-  // }
+  return uploadedUrl;
 };
 
 export const uploadTripImageToServer = async (

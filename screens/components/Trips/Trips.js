@@ -13,8 +13,8 @@ import { pickImageTrip } from "@/utils/imageHandlers";
 
 import {
   ActivityIndicator,
-  Button,
   Dimensions,
+  StyleSheet,
   Text,
   TouchableOpacity,
   View,
@@ -54,6 +54,8 @@ export default function Trips({ navigation }) {
   /* activeTab param is passed by Home screen's buttons */
   const route = useRoute();
   const initialTab = route.params?.activeTab || "explore"; // default if not passed
+  console.log(`id`, route?.params?.id);
+  console.log(`email`, route?.params?.email);
 
   //StatusBar.setHidden(false);
   const [currentPage, setCurrentPage] = useState(1);
@@ -74,6 +76,7 @@ export default function Trips({ navigation }) {
   });
 
   const [tripData, setTripData] = useState({
+    created_on: new Date(),
     driver_id: "",
     vehicle_image: "",
     title: "",
@@ -86,26 +89,30 @@ export default function Trips({ navigation }) {
       city: "",
       address: "",
     },
-    date: new Date(),
+    departure_datetime: new Date(),
+    is_pets_allowed: "",
+    is_allowed_smoking: "",
     price_per_seat: "",
     available_seats: "",
+    checkout_options: [],
+    taken_seats: [],
     car: {
       make: "",
       model: "",
       year: "",
       color: "",
       plate: "",
-      mileage: "",
-      fuelType: "",
-      transmissionType: "",
-      //imageUrl: "",
     },
   });
+
+  const cardOptions = ["Bank", "Revolut"];
+  const cashOptions = ["BGN", "EUR"];
 
   const [message, setMessage] = useState("DEFAULT");
   const [messageType, setMessageType] = useState("FAILED");
 
   const [showDatePicker, setShowDatePicker] = useState(false);
+  const [showTimePicker, setShowTimePicker] = useState(false);
 
   const onChange = (path, value) => {
     const keys = path.split(".");
@@ -136,37 +143,63 @@ export default function Trips({ navigation }) {
     }));
   };
 
+  const resetTripFields = () => {
+    /* clear image */
+    setImageName("");
+
+    /* clear fields */
+    setTripData({
+      created_on: new Date(),
+      driver_id: "",
+      vehicle_image: "",
+      title: "",
+      trip_description: "",
+      start_location: {
+        city: "",
+        address: "",
+      },
+      end_location: {
+        city: "",
+        address: "",
+      },
+      departure_datetime: new Date(),
+      is_pets_allowed: "",
+      is_allowed_smoking: "",
+      price_per_seat: "",
+      available_seats: "",
+      checkout_options: [],
+      taken_seats: [],
+      car: {
+        make: "",
+        model: "",
+        year: "",
+        color: "",
+        plate: "",
+      },
+    });
+  };
+
   const handleSubmitTrip = async () => {
+    /* set created on field */
+    tripData.created_on = new Date().toLocaleString([], {
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: false,
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+    });
+
+    /* set driver_id */
     tripData.driver_id = route?.params?.id;
+
+    console.log(`about to insert this trip:`, tripData);
+
+    /* send request to upload trip */
     const success = await createTrip(tripData, setMessage, setMessageType);
+
     if (success) {
-      setTripData({
-        driver_id: "",
-        vehicle_image: "",
-        title: "",
-        trip_description: "",
-        start_location: {
-          city: "",
-          address: "",
-        },
-        end_location: {
-          city: "",
-          address: "",
-        },
-        date: new Date(),
-        price_per_seat: "",
-        available_seats: "",
-        car: {
-          make: "",
-          model: "",
-          year: "",
-          color: "",
-          plate: "",
-          mileage: "",
-          fuelType: "",
-          transmissionType: "",
-        },
-      });
+      resetTripFields();
 
       // Optionally navigate or reset form
       navigation.navigate("Home"); // Or another screen
@@ -198,6 +231,7 @@ export default function Trips({ navigation }) {
                 baseAPIUrl
               );
             }
+
             return trip;
           });
 
@@ -301,6 +335,33 @@ export default function Trips({ navigation }) {
     ? filteredTrips.slice(0, currentPage * tripsPerPage)
     : filteredTrips.slice(0, 5);
 
+  const renderOptions = (label, options, path) => (
+    <InputGroup>
+      <Label>{label}</Label>
+      <View style={styles.optionsContainer}>
+        {options.map((option) => {
+          const selected = tripData.checkout_options?.[path]?.includes(option);
+          return (
+            <TouchableOpacity
+              key={option}
+              style={[styles.optionButton, selected && styles.optionSelected]}
+              onPress={() => {
+                const currentValues = tripData.checkout_options?.[path] || [];
+                const updatedValues = selected
+                  ? currentValues.filter((val) => val !== option)
+                  : [...currentValues, option];
+                onChange(`checkout_options.${path}`, updatedValues);
+              }}
+            >
+              <Text style={styles.optionText}>{option}</Text>
+            </TouchableOpacity>
+          );
+        })}
+      </View>
+    </InputGroup>
+  );
+
+  console.log(`trip.image=`, trips.vehicle_image);
   return (
     //<KeyboardAvoidingWrapper>
     <StyledScrollView>
@@ -330,7 +391,10 @@ export default function Trips({ navigation }) {
         </TouchableOpacity>
 
         <TouchableOpacity
-          onPress={() => setActiveTab("create")}
+          onPress={() => {
+            setActiveTab("create");
+            resetTripFields();
+          }}
           style={{
             paddingVertical: 10,
             paddingHorizontal: 20,
@@ -481,7 +545,39 @@ export default function Trips({ navigation }) {
             ) : (
               paginatedTrips.map((trip) => (
                 <TripCard key={trip._id}>
-                  <CardImage source={{ uri: trip.vehicle_image }} />
+                  <Text
+                    style={{
+                      position: "absolute",
+                      top: 10,
+                      right: 10,
+                      backgroundColor: "rgba(255, 255, 255, 0.8)", // optional: makes text readable on image
+                      paddingHorizontal: 8,
+                      paddingVertical: 4,
+                      borderRadius: 5,
+                      fontSize: 12,
+                      zIndex: 10,
+                    }}
+                  >
+                    Created on:{" "}
+                    {trip.created_on ? trip.created_on : "not available"}
+                  </Text>
+                  <CardImage
+                    style={{ backgroundColor: "lightgray" }}
+                    source={{ uri: trip.vehicle_image }}
+                    resizeMode="contain"
+                  />
+                  <Text
+                    style={{
+                      fontWeight: 600,
+                      fontSize: 18,
+                      fontStyle: "italic",
+                      textDecorationLine: "underline",
+                      marginBottom: 5,
+                    }}
+                  >
+                    Article overview:
+                  </Text>
+
                   <LocationContainer>
                     <Ionicons
                       name="checkmark-circle-outline"
@@ -518,7 +614,16 @@ export default function Trips({ navigation }) {
                   </LocationContainer>
                   <LocationContainer>
                     <Ionicons name="time-outline" size={14} color="#6d28d9" />
-                    <LocationText>{trip.departure_datetime}</LocationText>
+                    <LocationText>
+                      {tripData.departure_datetime.toLocaleString([], {
+                        year: "numeric",
+                        month: "2-digit",
+                        day: "2-digit",
+                        hour: "2-digit",
+                        minute: "2-digit",
+                        hour12: false,
+                      })}
+                    </LocationText>
                   </LocationContainer>
                   <LocationContainer>
                     <Ionicons name="cash-outline" size={16} color="#6d28d9" />
@@ -531,6 +636,7 @@ export default function Trips({ navigation }) {
                     onPress={() =>
                       navigation.navigate("TripDetails", {
                         tripData: trip,
+                        loggedUserId: route.params.id,
                       })
                     }
                   >
@@ -603,8 +709,7 @@ export default function Trips({ navigation }) {
               marginBottom: 10,
             }}
           >
-            <Button
-              title="Add Image"
+            <TouchableOpacity
               onPress={() =>
                 pickImageTrip(
                   setTripData,
@@ -613,7 +718,17 @@ export default function Trips({ navigation }) {
                   setMessageType
                 )
               }
-            />
+              style={{
+                backgroundColor: "#facc15",
+                paddingVertical: 10,
+                paddingHorizontal: 16,
+                borderRadius: 5,
+              }}
+            >
+              <Text style={{ color: "#000", fontWeight: "bold" }}>
+                Add Image
+              </Text>
+            </TouchableOpacity>
             <Text
               numberOfLines={1}
               ellipsizeMode="tail"
@@ -676,34 +791,6 @@ export default function Trips({ navigation }) {
                 onChangeText={(text) => onChangeCar("plate", text)}
               />
             </CarInputColumn>
-
-            <CarInputColumn>
-              <Label>Mileage (km)</Label>
-              <StyledInput
-                placeholder="120000"
-                keyboardType="numeric"
-                value={tripData.car.mileage}
-                onChangeText={(text) => onChangeCar("mileage", text)}
-              />
-            </CarInputColumn>
-
-            <CarInputColumn>
-              <Label>Fuel Type</Label>
-              <StyledInput
-                placeholder="Petrol / Diesel / Electric"
-                value={tripData.car.fuelType}
-                onChangeText={(text) => onChangeCar("fuelType", text)}
-              />
-            </CarInputColumn>
-
-            <CarInputColumn>
-              <Label>Transmission Type</Label>
-              <StyledInput
-                placeholder="Manual / Automatic"
-                value={tripData.car.transmissionType}
-                onChangeText={(text) => onChangeCar("transmissionType", text)}
-              />
-            </CarInputColumn>
           </CarInputContainer>
 
           <Text
@@ -750,7 +837,7 @@ export default function Trips({ navigation }) {
           <InputGroup>
             <Label>From (Address)</Label>
             <StyledInput
-              placeholder="Sofia"
+              placeholder="ul. Hristo Botev 24"
               value={tripData.start_location.address}
               onChangeText={(text) => onChange("start_location.address", text)}
             />
@@ -767,7 +854,7 @@ export default function Trips({ navigation }) {
           <InputGroup>
             <Label>To (Address)</Label>
             <StyledInput
-              placeholder="Varna"
+              placeholder="ul. Hristo Botev 24"
               value={tripData.end_location.address}
               onChangeText={(text) => onChange("end_location.address", text)}
             />
@@ -782,26 +869,131 @@ export default function Trips({ navigation }) {
                 borderColor: "#d1d5db",
                 borderRadius: 10,
                 padding: 12,
+                marginBottom: 10,
               }}
             >
               <Text style={{ color: "#111827" }}>
-                {tripData.date.toLocaleString()}
+                {tripData.departure_datetime.toLocaleString([], {
+                  year: "numeric",
+                  month: "2-digit",
+                  day: "2-digit",
+                  hour: "2-digit",
+                  minute: "2-digit",
+                  hour12: false,
+                })}
               </Text>
             </TouchableOpacity>
+
+            {/* Date Picker */}
             {showDatePicker && (
               <DateTimePicker
-                testID="dateTimePicker"
-                value={tripData.date}
+                testID="datePicker"
+                value={tripData.departure_datetime}
                 mode="date"
                 is24Hour={true}
                 display="default"
                 onChange={(event, selectedDate) => {
-                  const currentDate = selectedDate || tripData.date;
                   setShowDatePicker(false);
-                  onChange("date", currentDate);
+                  if (selectedDate) {
+                    // merge selected date with existing time
+                    const updatedDate = new Date(tripData.departure_datetime);
+                    updatedDate.setFullYear(selectedDate.getFullYear());
+                    updatedDate.setMonth(selectedDate.getMonth());
+                    updatedDate.setDate(selectedDate.getDate());
+                    setTripData({
+                      ...tripData,
+                      departure_datetime: updatedDate,
+                    });
+                    setShowTimePicker(true); // Show time picker next
+                  }
                 }}
               />
             )}
+
+            {/* Time Picker */}
+            {showTimePicker && (
+              <DateTimePicker
+                testID="timePicker"
+                value={tripData.departure_datetime}
+                mode="time"
+                is24Hour={true}
+                display="default"
+                onChange={(event, selectedTime) => {
+                  setShowTimePicker(false);
+                  if (selectedTime) {
+                    const updatedDate = new Date(tripData.departure_datetime);
+                    updatedDate.setHours(selectedTime.getHours());
+                    updatedDate.setMinutes(selectedTime.getMinutes());
+                    setTripData({
+                      ...tripData,
+                      departure_datetime: updatedDate,
+                    });
+                  }
+                }}
+              />
+            )}
+          </InputGroup>
+
+          <InputGroup>
+            <Label>Pets allowed</Label>
+            <View style={styles.radioContainer}>
+              <TouchableOpacity
+                style={styles.radioButton}
+                onPress={() => onChange("is_pets_allowed", "yes")}
+              >
+                <View
+                  style={[
+                    styles.radioCircle,
+                    tripData.is_pets_allowed === "yes" && styles.selected,
+                  ]}
+                />
+                <Text style={styles.radioText}>Yes</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.radioButton}
+                onPress={() => onChange("is_pets_allowed", "no")}
+              >
+                <View
+                  style={[
+                    styles.radioCircle,
+                    tripData.is_pets_allowed === "no" && styles.selected,
+                  ]}
+                />
+                <Text style={styles.radioText}>No</Text>
+              </TouchableOpacity>
+            </View>
+          </InputGroup>
+
+          <InputGroup>
+            <Label>Smoking allowed</Label>
+            <View style={styles.radioContainer}>
+              <TouchableOpacity
+                style={styles.radioButton}
+                onPress={() => onChange("is_allowed_smoking", "yes")}
+              >
+                <View
+                  style={[
+                    styles.radioCircle,
+                    tripData.is_allowed_smoking === "yes" && styles.selected,
+                  ]}
+                />
+                <Text style={styles.radioText}>Yes</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.radioButton}
+                onPress={() => onChange("is_allowed_smoking", "no")}
+              >
+                <View
+                  style={[
+                    styles.radioCircle,
+                    tripData.is_allowed_smoking === "no" && styles.selected,
+                  ]}
+                />
+                <Text style={styles.radioText}>No</Text>
+              </TouchableOpacity>
+            </View>
           </InputGroup>
 
           <InputGroup>
@@ -824,6 +1016,9 @@ export default function Trips({ navigation }) {
             />
           </InputGroup>
 
+          {renderOptions("Card Options", cardOptions, "card")}
+          {renderOptions("Cash Options", cashOptions, "cash")}
+
           <TripsCTAButton
             style={{ marginBottom: 90 }}
             onPress={handleSubmitTrip}
@@ -838,3 +1033,55 @@ export default function Trips({ navigation }) {
     //</KeyboardAvoidingWrapper>
   );
 }
+
+const styles = StyleSheet.create({
+  radioContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginTop: 10,
+  },
+  radioButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginRight: 20,
+  },
+  radioCircle: {
+    height: 20,
+    width: 20,
+    borderRadius: 10,
+    borderWidth: 2,
+    borderColor: "#6d28d9",
+    alignItems: "center",
+    justifyContent: "center",
+    marginRight: 8,
+  },
+  selected: {
+    backgroundColor: "#6d28d9",
+  },
+  radioText: {
+    fontSize: 16,
+    color: "#333",
+  },
+  optionsContainer: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 10,
+    marginTop: 10,
+  },
+  optionButton: {
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: "#ccc",
+    marginRight: 10,
+    marginBottom: 10,
+  },
+  optionSelected: {
+    backgroundColor: "#6d28d9",
+    borderColor: "#6d28d9",
+  },
+  optionText: {
+    color: "#333",
+  },
+});
