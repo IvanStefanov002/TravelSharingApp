@@ -3,7 +3,56 @@ import axios from "axios";
 import * as ImagePicker from "expo-image-picker";
 import { Alert } from "react-native";
 import { handleMessage } from "./messages";
-import { uploadImageToServer } from "./uploadImage";
+import { uploadCarImageToServer, uploadImageToServer } from "./uploadImage";
+
+/* Handles picking a new image and uploading it for a car */
+export const pickImageCar = async (
+  vehicle,
+  onVehicleUpdated,
+  route,
+  setMessage,
+  setMessageType
+) => {
+  console.log("PickImageCar start...");
+  try {
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      quality: 1,
+    });
+
+    if (!result.canceled) {
+      const newImageUrl = result.assets[0].uri;
+      const imageFileName = vehicle.imageUrl?.split("/")?.pop() || "";
+
+      // Optimistic update
+      const tempVehicle = { ...vehicle, imageUrl: newImageUrl };
+      onVehicleUpdated(tempVehicle);
+
+      // Upload image
+      const uploadedImageUrl = await uploadCarImageToServer(
+        vehicle.plate,
+        newImageUrl,
+        imageFileName,
+        route?.params?.email,
+        setMessage,
+        setMessageType,
+        () => {} // no-op, handled manually
+      );
+
+      // Final update with actual uploaded image URL
+      const updatedVehicle = { ...vehicle, imageUrl: uploadedImageUrl };
+      onVehicleUpdated(updatedVehicle);
+    } else {
+      Alert.alert("You did not select any image.");
+    }
+  } catch (error) {
+    console.error("Error picking image:", error);
+    Alert.alert("An error occurred while picking the image.");
+    return false;
+  }
+
+  return true;
+};
 
 /**
  * Handles picking a new image and uploading it.
@@ -105,6 +154,52 @@ export const changeImage = async (
       setVehicleInfo((prev) => ({ ...prev, imageUrl: newImageUrl }));
 
       const uploadedImageUrl = await uploadImageToServer(
+        newImageUrl,
+        imageFileName,
+        route?.params?.email,
+        setMessage,
+        setMessageType,
+        setVehicleInfo
+      );
+
+      //setVehicleInfo((prev) => ({ ...prev, imageUrl: uploadedImageUrl }));
+
+      vehicleInfo.imageUrl = uploadedImageUrl;
+    } else {
+      Alert.alert("You did not select any image.");
+    }
+  } catch (error) {
+    console.error("Error changing image:", error);
+    Alert.alert("An error occurred while changing the image.");
+
+    return false;
+  }
+
+  return true;
+};
+
+export const changeImageCar = async (
+  vehicleInfo,
+  setVehicleInfo,
+  route,
+  setMessage,
+  setMessageType
+) => {
+  console.log("ChangeImageCar start...");
+
+  try {
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      quality: 1,
+    });
+
+    if (!result.canceled) {
+      const imageFileName = vehicleInfo.imageUrl.split("/").pop();
+      const newImageUrl = result.assets[0].uri;
+      setVehicleInfo((prev) => ({ ...prev, imageUrl: newImageUrl }));
+
+      const uploadedImageUrl = await uploadCarImageToServer(
+        vehicleInfo.plate,
         newImageUrl,
         imageFileName,
         route?.params?.email,

@@ -14,6 +14,7 @@ import {
 
 const { primary } = Colors;
 
+import { baseAPIUrl } from "@/components/shared";
 import { useFocusEffect } from "@react-navigation/native";
 import { useCallback, useState } from "react";
 import Home from "../screens/components/Home/Home";
@@ -26,7 +27,7 @@ const Tab = createBottomTabNavigator();
 const CustomHeader = ({ name, email, imageUri }) => {
   const source =
     typeof imageUri === "string" && imageUri.length > 0
-      ? { uri: imageUri }
+      ? { uri: `${baseAPIUrl}${imageUri}` }
       : imageUri;
 
   return (
@@ -41,8 +42,6 @@ const CustomHeader = ({ name, email, imageUri }) => {
 };
 
 const HomeTabs = ({ route }) => {
-  console.log(`inside HomeTabs id`, route?.params?.id);
-  console.log(`inside HomeTabs email`, route?.params?.email);
   const id = route?.params?.id ?? "";
   const photoUrl = route?.params?.profileImage ?? "";
   const name = route?.params?.name ?? "";
@@ -64,9 +63,6 @@ const HomeTabs = ({ route }) => {
       });
     }, [route?.params])
   );
-
-  console.log(`inside HomeTabs id 2`, id);
-  console.log(`inside HomeTabs email 2`, email);
 
   return (
     <>

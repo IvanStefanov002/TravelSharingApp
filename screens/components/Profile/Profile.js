@@ -179,7 +179,7 @@ export default function Profile({ navigation, route }) {
     <ScrollView contentContainerStyle={{ flexGrow: 1 }}>
       <ProfileContainer>
         <ProfileSection>
-          <AvatarProfile source={{ uri: user.imageUrl }} />
+          <AvatarProfile source={{ uri: `${baseAPIUrl}${user.imageUrl}` }} />
           <ProfileName>{user.name}</ProfileName>
           <ProfileEmail>{user.email}</ProfileEmail>
         </ProfileSection>

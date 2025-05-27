@@ -69,6 +69,7 @@ export default function Home({ route, navigation }) {
     }, [id]) // Include `id` as a dependency
   );
 
+  /* to be done if it has to be done */
   const chartData = {
     labels: ["Mon", "Tue", "Wed", "Thu", "Fri"],
     datasets: [

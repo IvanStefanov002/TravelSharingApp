@@ -9,17 +9,22 @@ import { fetchUserDataById } from "@/utils/fetchUserDataById";
 import DateTimePicker from "@react-native-community/datetimepicker";
 
 import { createTrip } from "@/utils/createTrip";
+import { fetchVehicleInfo } from "@/utils/fetchVehicleInfo";
 import { pickImageTrip } from "@/utils/imageHandlers";
 
 import {
   ActivityIndicator,
+  Button,
   Dimensions,
+  FlatList,
+  Modal,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
 } from "react-native";
 
+import { handleMessage } from "@/utils/messages";
 import {
   CardImage,
   CarInputColumn,
@@ -54,12 +59,16 @@ export default function Trips({ navigation }) {
   /* activeTab param is passed by Home screen's buttons */
   const route = useRoute();
   const initialTab = route.params?.activeTab || "explore"; // default if not passed
-  console.log(`id`, route?.params?.id);
-  console.log(`email`, route?.params?.email);
+  const userEmail = route.params?.email || "guest@tu-sofia.bg";
 
   //StatusBar.setHidden(false);
   const [currentPage, setCurrentPage] = useState(1);
   const tripsPerPage = 3;
+
+  /* for choosing predefined vehicle */
+  const [modalVisible, setModalVisible] = useState(false);
+  const [vehicleInfo, setVehicleInfo] = useState(null);
+  const [loading, setLoading] = useState(false);
 
   const [trips, setTrips] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -226,10 +235,11 @@ export default function Trips({ navigation }) {
 
             /* replace image url */
             if (trip.vehicle_image) {
-              trip.vehicle_image = trip.vehicle_image.replace(
-                "http://localhost:3000",
-                baseAPIUrl
-              );
+              // trip.vehicle_image = trip.vehicle_image.replace(
+              //   "http://localhost:3000",
+              //   baseAPIUrl
+              // );
+              trip.vehicle_image = trip.vehicle_image;
             }
 
             return trip;
@@ -276,6 +286,35 @@ export default function Trips({ navigation }) {
       fetchTripsWithDrivers();
     }, [route.params?.activeTab])
   );
+
+  const [selectedCar, setSelectedCar] = useState(null);
+
+  // const handleMessage = (msg, type) => {
+  //   console.log(`[${type}] ${msg}`);
+  // };
+
+  const handleFetchUserVehicle = async () => {
+    if (!userEmail) {
+      handleMessage("User email is missing", "FAILED");
+      return;
+    }
+
+    setLoading(true);
+    await fetchVehicleInfo(
+      userEmail,
+      setVehicleInfo,
+      setMessage,
+      setMessageType,
+      handleMessage
+    );
+
+    setLoading(false);
+  };
+
+  const handleOpenModal = async () => {
+    setModalVisible(true);
+    await handleFetchUserVehicle(); // fetch vehicle data when modal opens
+  };
 
   const handlePickerChange = (value, fieldName) => {
     if (value !== undefined) {
@@ -361,7 +400,6 @@ export default function Trips({ navigation }) {
     </InputGroup>
   );
 
-  console.log(`trip.image=`, trips.vehicle_image);
   return (
     //<KeyboardAvoidingWrapper>
     <StyledScrollView>
@@ -563,7 +601,7 @@ export default function Trips({ navigation }) {
                   </Text>
                   <CardImage
                     style={{ backgroundColor: "lightgray" }}
-                    source={{ uri: trip.vehicle_image }}
+                    source={{ uri: `${baseAPIUrl}${trip.vehicle_image}` }}
                     resizeMode="contain"
                   />
                   <Text
@@ -587,7 +625,11 @@ export default function Trips({ navigation }) {
                     <LocationText
                       style={{
                         color:
-                          trip.article_status == "available" ? "green" : "red",
+                          trip.article_status === "available"
+                            ? "green"
+                            : trip.article_status === "on going"
+                            ? "#facc15"
+                            : "red",
                         fontWeight: 600,
                       }}
                     >
@@ -700,6 +742,105 @@ export default function Trips({ navigation }) {
             Describe your vehicle's details:
           </Text>
           <Line style={{ marginBottom: 20, marginTop: 0 }}></Line>
+
+          <View
+            style={{
+              flexDirection: "row",
+              alignItems: "center",
+              justifyContent: "flex-start",
+              marginBottom: 10,
+            }}
+          >
+            <Text>Already got vehicle? Pick it up!</Text>
+            <TripsCTAButton
+              style={{
+                marginLeft: 20,
+                marginBottom: 10,
+                width: 90,
+                backgroundColor: "#facc15",
+              }}
+              onPress={handleOpenModal}
+            >
+              <Text style={{ color: "black", fontWeight: "bold" }}>Pick</Text>
+            </TripsCTAButton>
+          </View>
+
+          <Modal
+            animationType="slide"
+            transparent={true}
+            visible={modalVisible}
+            onRequestClose={() => setModalVisible(false)}
+          >
+            <View
+              style={{
+                flex: 1,
+                justifyContent: "center",
+                alignItems: "center",
+                backgroundColor: "rgba(0, 0, 0, 0.5)",
+              }}
+            >
+              <View
+                style={{
+                  backgroundColor: "#fff",
+                  padding: 20,
+                  borderRadius: 10,
+                  width: "80%",
+                  maxHeight: "70%",
+                }}
+              >
+                <Text
+                  style={{ fontSize: 18, fontWeight: "bold", marginBottom: 20 }}
+                >
+                  Select Your Car
+                </Text>
+
+                {vehicleInfo?.length > 0 ? (
+                  <FlatList
+                    data={vehicleInfo}
+                    keyExtractor={(item, index) =>
+                      item.plate || index.toString()
+                    }
+                    renderItem={({ item }) => (
+                      <TouchableOpacity
+                        style={{
+                          padding: 10,
+                          borderBottomWidth: 1,
+                          borderBottomColor: "#ccc",
+                        }}
+                        onPress={() => {
+                          setSelectedCar(item);
+                          setModalVisible(false);
+
+                          /* set params of the fields */
+                          //setImageName(item.image_url); /* questionable */
+                          tripData.vehicle_image = item.image_url;
+                          onChangeCar("make", item.make);
+                          onChangeCar("model", item.model);
+                          onChangeCar("year", item.year.toString());
+                          onChangeCar("color", item.color);
+                          onChangeCar("plate", item.plate);
+                        }}
+                      >
+                        <Text style={{ fontWeight: "bold" }}>
+                          {`${item.make} ${item.model} (${item.year})`}
+                        </Text>
+                        <Text>Plate: {item.plate}</Text>
+                      </TouchableOpacity>
+                    )}
+                  />
+                ) : (
+                  <Text>No cars found for your account.</Text>
+                )}
+
+                <View style={{ height: 10 }} />
+                <Button
+                  title="Cancel"
+                  color="red"
+                  onPress={() => setModalVisible(false)}
+                />
+              </View>
+            </View>
+          </Modal>
 
           <View
             style={{

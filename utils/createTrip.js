@@ -5,6 +5,7 @@ import { uploadTripImageToServer } from "./uploadImage";
 export const createTrip = async (tripData, setMessage, setMessageType) => {
   try {
     /* first upload the image to the server */
+
     const correctImageUrl = await uploadTripImageToServer(
       tripData.vehicle_image,
       "", // Add other needed params
@@ -21,6 +22,7 @@ export const createTrip = async (tripData, setMessage, setMessageType) => {
     // );
 
     /* uploadTripImageToServer has corrected the image url with the correct */
+
     tripData.vehicle_image = correctImageUrl;
 
     const response = await axios.post(`${baseAPIUrl}/trips/create`, tripData);

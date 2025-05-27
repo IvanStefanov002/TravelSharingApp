@@ -53,10 +53,12 @@ const AboutVehicle = ({ route, navigation }) => {
       } else {
         const { car, ratings } = data[0];
 
-        const imageUrl = car.image_url.replace(
-          "http://localhost:3000",
-          baseAPIUrl
-        );
+        // const imageUrl = car.image_url.replace(
+        //   "http://localhost:3000",
+        //   baseAPIUrl
+        // );
+
+        const imageUrl = car.image_url;
 
         setVehicleInfo({
           make: car.make,
@@ -158,10 +160,12 @@ const AboutVehicle = ({ route, navigation }) => {
         handleMessage("Image uploaded successfully", "SUCCESS");
 
         /* swap localhost with actual ip */
-        const imageUrl = response.data.imageUrl.replace(
-          "http://localhost:3000",
-          baseAPIUrl
-        );
+        // const imageUrl = response.data.imageUrl.replace(
+        //   "http://localhost:3000",
+        //   baseAPIUrl
+        // );
+        const imageUrl = response.data.imageUrl;
+
         updateVehicleImageUrl(imageUrl);
       } else {
         handleMessage("Image upload failed", "FAILED");
@@ -202,7 +206,7 @@ const AboutVehicle = ({ route, navigation }) => {
         >
           {vehicleInfo.imageUrl ? (
             <VehicleImage
-              source={{ uri: vehicleInfo.imageUrl }}
+              source={{ uri: `${baseAPIUrl}${vehicleInfo.imageUrl}` }}
               style={{
                 width: "100%", // Make the image take up max width
                 maxWidth: 320, // Set max width to 300 or any desired value

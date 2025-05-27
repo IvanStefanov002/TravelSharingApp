@@ -2,10 +2,13 @@ import { baseAPIUrl } from "@/components/shared";
 import { Ionicons } from "@expo/vector-icons";
 import { useRoute } from "@react-navigation/native";
 import axios from "axios";
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 
 import { updateTripStatus } from "@/utils/updateTripStatus";
 import { updateUserRating } from "@/utils/updateUserRating";
+
+import { useFocusEffect } from "@react-navigation/native";
+import { useCallback } from "react";
 
 import {
   Alert,
@@ -13,6 +16,7 @@ import {
   Modal,
   ScrollView,
   Text,
+  TextInput,
   TouchableOpacity,
   View,
 } from "react-native";
@@ -49,7 +53,13 @@ export default function TripDetails({ navigation }) {
   const [showPassengerList, setShowPassengerList] = useState(false);
   const [expandedPassenger, setExpandedPassenger] = useState(null);
 
+  /* manual add a passenger */
+  const [manualPassengerNames, setManualPassengerNames] = useState(null);
+  const [manualPassengerEmail, setManualPassengerEmail] = useState(null);
+  const [manualPassengerPhone, setManualPassengerPhone] = useState(null);
+
   /* for ratings */
+  const [showAddPassengerModal, setShowAddPassengerModal] = useState(false);
   const [showRatingModal, setShowRatingModal] = useState(false);
   const [selectedRating, setSelectedRating] = useState(null);
 
@@ -57,24 +67,26 @@ export default function TripDetails({ navigation }) {
   const [expandedSection, setExpandedSection] = useState(null);
 
   // Fetch trip details once when the component mounts
-  useEffect(() => {
-    const fetchPassangerInfo = async () => {
-      try {
-        const info = {};
-        for (const id of trip.taken_seats || []) {
-          const res = await axios.get(`${baseAPIUrl}/users/${id}`);
-          info[id] = res.data;
-        }
-        setPassengerInfo(info);
-      } catch (error) {
-        console.error("Error fetching passenger info:", error.message);
-      } finally {
-        setIsLoading(false);
+  const fetchPassangerInfo = async () => {
+    try {
+      const info = {};
+      for (const id of trip.taken_seats || []) {
+        const res = await axios.get(`${baseAPIUrl}/users/${id}`);
+        info[id] = res.data;
       }
-    };
+      setPassengerInfo(info);
+    } catch (error) {
+      console.error("Error fetching passenger info:", error.message);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
-    fetchPassangerInfo();
-  }, [trip._id]); // Dependency array with tripId ensures it's fetched once
+  useFocusEffect(
+    useCallback(() => {
+      fetchPassangerInfo(); // re-fetch the trip data
+    }, [])
+  );
 
   const toggleSection = (id) => {
     setExpandedSection((prev) => (prev === id ? null : id));
@@ -87,11 +99,32 @@ export default function TripDetails({ navigation }) {
       Alert.alert("Success", result.message, [
         {
           text: "OK",
-          onPress: () =>
-            navigation.navigate("HomeTabs", {
-              screen: "Trips",
-              params: { activeTab: "explore" },
-            }),
+          // onPress: () =>
+          //   navigation.navigate("HomeTabs", {
+          //     screen: "Trips",
+          //     params: { activeTab: "explore" },
+          //   }),
+          onPress: () => navigation.goBack(),
+        },
+      ]);
+    } else {
+      Alert.alert("Error", result.message);
+    }
+  };
+
+  const handleOnGoingTrip = async () => {
+    const result = await updateTripStatus(trip._id, "on going");
+
+    if (result.success) {
+      Alert.alert("Success", result.message, [
+        {
+          text: "OK",
+          // onPress: () =>
+          //   navigation.navigate("HomeTabs", {
+          //     screen: "Trips",
+          //     params: { activeTab: "explore" },
+          //   }),
+          onPress: () => navigation.goBack(),
         },
       ]);
     } else {
@@ -105,6 +138,144 @@ export default function TripDetails({ navigation }) {
   };
 
   const paymentOptions = trip.checkout_options || {};
+
+  const addPassengerToTrip = async (tripId, names, email, phone) => {
+    const payload = { tripId, names, email, phone };
+
+    if (trip.available_seats !== 0) {
+      try {
+        const response = await axios.post(
+          `${baseAPIUrl}/trips/bookManual`,
+          payload
+        );
+
+        if (response.status === 200 || response.status === 201) {
+          console.log(
+            `User with id ${response.data.userId} booked trip with id ${tripId}`
+          );
+
+          setTrip((prevTrip) => ({
+            ...prevTrip,
+            available_seats: prevTrip.available_seats - 1,
+            taken_seats: [...prevTrip.taken_seats, response.data.userId],
+          }));
+
+          return {
+            success: true,
+            message: "Trip passengers updated successfully.",
+            data: response.data,
+          };
+        }
+      } catch (error) {
+        console.error("Error updating trip:", error.message);
+
+        return {
+          success: false,
+          message: "Failed to update trip passengers. Please try again later.",
+        };
+      }
+    } else {
+      return {
+        success: false,
+        message: "There are no more available seats!",
+      };
+    }
+  };
+
+  const enrollInATrip = async (userId, tripId) => {
+    /* check if booking is possible */
+    if (trip.available_seats !== 0) {
+      /* there are available seats - book a seat */
+      const payload = { tripId, userId };
+
+      try {
+        const response = await axios.post(`${baseAPIUrl}/trips/book`, payload);
+
+        if (response.status === 200 || response.status === 201) {
+          console.log(`User with id ${userId} booked trip with id ${tripId}`);
+
+          setTrip((prevTrip) => ({
+            ...prevTrip,
+            available_seats: prevTrip.available_seats - 1,
+            taken_seats: [...prevTrip.taken_seats, userId],
+          }));
+
+          Alert.alert("Success", "You booked this trip!", [
+            {
+              text: "OK",
+              onPress: () => navigation.goBack(),
+            },
+          ]);
+
+          return {
+            success: true,
+            message: "Trip passengers updated successfully.",
+            data: response.data,
+          };
+        }
+      } catch (error) {
+        console.error("Error updating trip:", error.message);
+        Alert.alert("Cancel", "You could not cancel booking of this trip!", [
+          {
+            text: "OK",
+            onPress: () => navigation.goBack(),
+          },
+        ]);
+
+        return {
+          success: false,
+          message: "Failed to update trip passengers. Please try again later.",
+        };
+      }
+    }
+  };
+
+  const outrollFromATrip = async (userId, tripId) => {
+    /* check if booking is possible */
+    if (trip.available_seats !== 0) {
+      /* there are available seats - book a seat */
+      const payload = { tripId, userId };
+
+      try {
+        const response = await axios.post(
+          `${baseAPIUrl}/trips/unbook`,
+          payload
+        );
+
+        if (response.status === 200 || response.status === 201) {
+          console.log(
+            `User with id ${userId} canceled booking from trip with id ${tripId}`
+          );
+
+          setTrip((prevTrip) => ({
+            ...prevTrip,
+            available_seats: prevTrip.available_seats + 1,
+            taken_seats: prevTrip.taken_seats.filter((id) => id !== userId),
+          }));
+
+          Alert.alert("Success", "You canceled booking of this trip!", [
+            {
+              text: "OK",
+              onPress: () => navigation.goBack(),
+            },
+          ]);
+        }
+      } catch (error) {
+        console.error("Error updating trip:", error.message);
+        Alert.alert("Fail", "You could not cancel booking of this trip!", [
+          {
+            text: "OK",
+            onPress: () => navigation.goBack(),
+          },
+        ]);
+
+        return {
+          success: false,
+          message: "Failed to update trip passengers. Please try again later.",
+        };
+      }
+    }
+  };
 
   // Make sure trip and driver exist before rendering.
   if (!trip) {
@@ -148,7 +319,7 @@ export default function TripDetails({ navigation }) {
           {/* Image below the text */}
           {trip && trip.vehicle_image ? (
             <Image
-              source={{ uri: trip.vehicle_image }}
+              source={{ uri: `${baseAPIUrl}${trip.vehicle_image}` }}
               style={{
                 width: "100%",
                 height: 300,
@@ -238,33 +409,63 @@ export default function TripDetails({ navigation }) {
         </TripContainer>
 
         {/* Taken Seats Toggle */}
-        <TouchableOpacity
-          onPress={() => setShowPassengerList((prev) => !prev)}
+        <View
           style={{
-            marginTop: 10,
-            marginBottom: 10,
-            backgroundColor: "lightgray",
-            paddingVertical: 14,
-            paddingHorizontal: 16,
-            borderRadius: 12,
+            display: "flex",
             flexDirection: "row",
-            alignItems: "center",
-            justifyContent: "space-between",
-            borderWidth: 1,
-            borderColor: "#e5e7eb",
+            gap: 8,
           }}
         >
-          <Text style={{ fontWeight: 600, fontSize: 16 }}>
-            Taken Seats: {trip.taken_seats?.length || 0}
-          </Text>
-          <Ionicons
-            name={
-              showPassengerList ? "chevron-up-outline" : "chevron-down-outline"
-            }
-            size={20}
-            color="#4b5563"
-          />
-        </TouchableOpacity>
+          <TouchableOpacity
+            onPress={() => setShowPassengerList((prev) => !prev)}
+            style={{
+              flex: 5,
+              marginTop: 10,
+              marginBottom: 10,
+              backgroundColor: "lightgray",
+              paddingVertical: 14,
+              paddingHorizontal: 16,
+              borderRadius: 12,
+              flexDirection: "row",
+              alignItems: "center",
+              justifyContent: "space-between",
+              borderWidth: 1,
+              borderColor: "#e5e7eb",
+            }}
+          >
+            <Text style={{ fontWeight: 600, fontSize: 16 }}>
+              Taken Seats: {trip.taken_seats?.length || 0}
+            </Text>
+            <Ionicons
+              name={
+                showPassengerList
+                  ? "chevron-up-outline"
+                  : "chevron-down-outline"
+              }
+              size={20}
+              color="#4b5563"
+              //style={{ paddingLeft: 130 }}
+            />
+          </TouchableOpacity>
+          {loggedUserId === trip.driver_id && (
+            <TouchableOpacity
+              onPress={() => setShowAddPassengerModal(true)}
+              style={{
+                flex: 1,
+                height: "auto",
+                width: "auto",
+                marginTop: 10,
+                marginBottom: 10,
+                backgroundColor: "#10b981",
+                borderRadius: 12,
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              <Ionicons name="person-add-outline" size={20} color="white" />
+            </TouchableOpacity>
+          )}
+        </View>
 
         {showPassengerList && (
           <View style={{ marginTop: 10, marginBottom: 10 }}>
@@ -286,7 +487,7 @@ export default function TripDetails({ navigation }) {
                     <Image
                       source={{
                         uri:
-                          user?.profile_image ??
+                          `${baseAPIUrl}${user?.profile_image}` ??
                           "https://via.placeholder.com/100x100.png?text=User",
                       }}
                       style={{
@@ -520,23 +721,39 @@ export default function TripDetails({ navigation }) {
               </Text>
             </TouchableOpacity>
 
-            <TouchableOpacity
-              style={{
-                height: 50,
-                width: 150,
-                marginTop: 20,
-                backgroundColor: "#facc15",
-                padding: 15,
-                borderRadius: 10,
-              }}
-              onPress={() =>
-                navigation.navigate("Booking", { tripId: trip._id })
-              }
-            >
-              <Text style={{ color: "white", textAlign: "center" }}>
-                Book This Trip
-              </Text>
-            </TouchableOpacity>
+            {trip.taken_seats.includes(loggedUserId) ? (
+              <TouchableOpacity
+                style={{
+                  height: 50,
+                  width: 150,
+                  marginTop: 20,
+                  backgroundColor: "red",
+                  padding: 15,
+                  borderRadius: 10,
+                }}
+                onPress={() => outrollFromATrip(loggedUserId, trip._id)}
+              >
+                <Text style={{ color: "white", textAlign: "center" }}>
+                  Cancel booking
+                </Text>
+              </TouchableOpacity>
+            ) : (
+              <TouchableOpacity
+                style={{
+                  height: 50,
+                  width: 150,
+                  marginTop: 20,
+                  backgroundColor: "#facc15",
+                  padding: 15,
+                  borderRadius: 10,
+                }}
+                onPress={() => enrollInATrip(loggedUserId, trip._id)}
+              >
+                <Text style={{ color: "white", textAlign: "center" }}>
+                  Book This Trip
+                </Text>
+              </TouchableOpacity>
+            )}
           </View>
         ) : loggedUserId === trip.driver_id &&
           trip.article_status !== "finished" ? (
@@ -548,6 +765,23 @@ export default function TripDetails({ navigation }) {
               justifyContent: "space-evenly",
             }}
           >
+            {trip.article_status === "available" && (
+              <TouchableOpacity
+                style={{
+                  height: 50,
+                  width: 150,
+                  marginTop: 20,
+                  backgroundColor: "#facc15",
+                  padding: 15,
+                  borderRadius: 10,
+                }}
+                onPress={handleOnGoingTrip}
+              >
+                <Text style={{ color: "white", textAlign: "center" }}>
+                  Start journey
+                </Text>
+              </TouchableOpacity>
+            )}
             <TouchableOpacity
               style={{
                 height: 50,
@@ -565,6 +799,106 @@ export default function TripDetails({ navigation }) {
             </TouchableOpacity>
           </View>
         ) : null}
+
+        <Modal
+          visible={showAddPassengerModal}
+          transparent={true}
+          animationType="slide"
+          onRequestClose={() => setShowAddPassengerModal(false)}
+        >
+          <View
+            style={{
+              flex: 1,
+              backgroundColor: "rgba(0,0,0,0.5)",
+              justifyContent: "center",
+              alignItems: "center",
+            }}
+          >
+            <View
+              style={{
+                backgroundColor: "white",
+                padding: 20,
+                borderRadius: 10,
+                width: 300,
+              }}
+            >
+              <Text style={{ fontSize: 18, marginBottom: 10 }}>
+                Add Passenger by ID or Email
+              </Text>
+              <TextInput
+                placeholder="Names"
+                value={manualPassengerNames}
+                onChangeText={setManualPassengerNames}
+                style={{
+                  borderWidth: 1,
+                  borderColor: "#ccc",
+                  padding: 10,
+                  marginBottom: 15,
+                  borderRadius: 5,
+                }}
+              />
+              <TextInput
+                placeholder="Email"
+                value={manualPassengerEmail}
+                onChangeText={setManualPassengerEmail}
+                style={{
+                  borderWidth: 1,
+                  borderColor: "#ccc",
+                  padding: 10,
+                  marginBottom: 15,
+                  borderRadius: 5,
+                }}
+              />
+              <TextInput
+                placeholder="Phone"
+                value={manualPassengerPhone}
+                onChangeText={setManualPassengerPhone}
+                style={{
+                  borderWidth: 1,
+                  borderColor: "#ccc",
+                  padding: 10,
+                  marginBottom: 15,
+                  borderRadius: 5,
+                }}
+              />
+
+              <TouchableOpacity
+                style={{
+                  backgroundColor: "#6d28d9",
+                  paddingVertical: 10,
+                  paddingHorizontal: 20,
+                  borderRadius: 5,
+                }}
+                onPress={async () => {
+                  const result = await addPassengerToTrip(
+                    trip._id,
+                    manualPassengerNames,
+                    manualPassengerEmail,
+                    manualPassengerPhone
+                  );
+                  if (result.success) {
+                    Alert.alert("Success", result.message, [
+                      {
+                        text: "OK",
+                        onPress: () => navigation.goBack(),
+                      },
+                    ]);
+                  } else {
+                    Alert.alert("Error", result.message, [
+                      {
+                        text: "OK",
+                        onPress: () => navigation.goBack(),
+                      },
+                    ]);
+                  }
+                  setShowAddPassengerModal(false);
+                }}
+              >
+                <Text style={{ color: "white", textAlign: "center" }}>Add</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </Modal>
 
         <Modal
           visible={showRatingModal}
@@ -637,8 +971,6 @@ export default function TripDetails({ navigation }) {
                     newAverageRating,
                     driver.ratings.count + 1
                   );
-
-                  console.log(result);
 
                   if (result == "SUCCESS") {
                     /* update driver's rating and count for this screen */

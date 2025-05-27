@@ -47,10 +47,11 @@ const TripHistory = ({ route }) => {
             }
 
             if (trip.vehicle_image) {
-              trip.vehicle_image = trip.vehicle_image.replace(
-                "http://localhost:3000",
-                baseAPIUrl
-              );
+              // trip.vehicle_image = trip.vehicle_image.replace(
+              //   "http://localhost:3000",
+              //   baseAPIUrl
+              // );
+              trip.vehicle_image = trip.vehicle_image;
             }
 
             return trip;
@@ -89,7 +90,7 @@ const TripHistory = ({ route }) => {
             hostedTrips.map((trip) => (
               <View style={styles.card} key={trip._id}>
                 <Image
-                  source={{ uri: trip.vehicle_image }}
+                  source={{ uri: `${baseAPIUrl}${trip.vehicle_image}` }}
                   style={styles.image}
                 />
                 <View style={styles.details}>
@@ -115,7 +116,7 @@ const TripHistory = ({ route }) => {
             joinedTrips.map((trip) => (
               <View style={styles.card} key={trip._id}>
                 <Image
-                  source={{ uri: trip.vehicle_image }}
+                  source={{ uri: `${baseAPIUrl}${trip.vehicle_image}` }}
                   style={styles.image}
                 />
                 <View style={styles.details}>

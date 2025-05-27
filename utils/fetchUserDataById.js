@@ -10,10 +10,12 @@ export const fetchUserDataById = async (id) => {
 
     /* correct image_url before returning */
     if (userData?.car?.image_url) {
-      userData.car.image_url = userData.car.image_url.replace(
-        "http://localhost:3000",
-        baseAPIUrl
-      );
+      // userData.car.image_url = userData.car.image_url.replace(
+      //   "http://localhost:3000",
+      //   baseAPIUrl
+      // );
+
+      userData.car.image_url = userData.car.image_url;
     }
 
     return userData;

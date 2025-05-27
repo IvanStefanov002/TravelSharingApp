@@ -1,15 +1,18 @@
+import { Picker } from "@react-native-picker/picker";
 import { useFocusEffect } from "@react-navigation/native"; // Import useFocusEffect
-import axios from "axios";
 import React, { useCallback, useState } from "react";
 import { Button, ScrollView, StatusBar, View } from "react-native";
 import { baseAPIUrl } from "../../../components/shared";
-import {
-  changeImage,
-  deleteImage,
-  pickImage,
-} from "./../../../utils/imageHandlers";
-import { handleMessage } from "./../../../utils/messages";
 
+import {
+  changeImageCar,
+  deleteImage,
+  pickImageCar,
+} from "./../../../utils/imageHandlers";
+
+import { handleMessage } from "@/utils/messages";
+
+import { fetchVehicleInfo } from "@/utils/fetchVehicleInfo";
 import {
   Line,
   VehicleCard,
@@ -23,208 +26,199 @@ import {
 const AboutVehicle = ({ route, navigation }) => {
   StatusBar.setHidden(true);
 
-  const [vehicleInfo, setVehicleInfo] = useState({
-    make: "",
-    model: "",
-    year: "",
-    color: "",
-    plate: "",
-    mileage: "",
-    fuelType: "",
-    transmissionType: "",
-    ratings: { average: 0, count: 0 },
-    imageUrl: "", // To hold the image URI
-  });
-  const [message, setMessage] = useState("");
-  const [messageType, setMessageType] = useState("FAILED");
+  const [vehicleInfo, setVehicleInfo] = useState([]); // all vehicles
+  const [selectedVehicle, setSelectedVehicle] = useState(null); // selected one
 
-  // Fetch vehicle information
-  const fetchVehicleInfo = async (email) => {
-    const url = `${baseAPIUrl}/users/fetchVehicleInfo`;
+  const [message, setMessage] = useState("DEFAULT");
+  const [messageType, setMessageType] = useState("DEFAULT");
 
-    try {
-      const response = await axios.post(url, { email });
-      const { statusText, message, data } = response.data;
-
-      if (statusText !== "SUCCESS") {
-        handleMessage(setMessage, setMessageType, message, "FAILED");
-      } else {
-        const { car, ratings } = data[0];
-
-        const imageUrl = car.image_url.replace(
-          "http://localhost:3000",
-          baseAPIUrl
-        );
-
-        setVehicleInfo({
-          make: car.make,
-          model: car.model,
-          year: car.year,
-          color: car.color,
-          plate: car.plate,
-          mileage: car.mileage,
-          fuelType: car.fuel_type,
-          transmissionType: car.transmission,
-          ratings: ratings ?? { average: 0, count: 0 },
-          imageUrl: imageUrl || "",
-        });
-        handleMessage(
-          setMessage,
-          setMessageType,
-          "Vehicle info loaded",
-          "SUCCESS"
-        );
-      }
-    } catch (error) {
-      console.error("Fetch error:", error);
-      handleMessage(
-        setMessage,
-        setMessageType,
-        error.response?.data?.message || "Fetch vehicle info failed",
-        "FAILED"
-      );
-    }
-  };
-
-  // Fetch data when screen is focused
   useFocusEffect(
     useCallback(() => {
-      if (route?.params?.email) {
-        fetchVehicleInfo(route.params.email);
-      }
+      const fetchData = async () => {
+        if (route?.params?.email) {
+          await fetchVehicleInfo(
+            route.params.email,
+            setVehicleInfo,
+            setMessage,
+            setMessageType,
+            handleMessage
+          );
+        }
+      };
+
+      fetchData();
+      setVehicleInfo(vehicleInfo);
+      setSelectedVehicle(vehicleInfo[0]); /* default to the first vehicle */
+
+      // Optional: return cleanup function if needed
+      return () => {};
     }, [route?.params?.email])
   );
 
   return (
     <ScrollView>
       <VehicleContainer>
-        <View
-          style={{
-            alignItems: "center",
-          }}
-        ></View>
-        <View
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            //alignItems: "center", // Centers the image and button horizontally
-          }}
-        >
-          {vehicleInfo.imageUrl ? (
-            <VehicleImage
-              source={{ uri: vehicleInfo.imageUrl }}
-              style={{
-                width: "100%", // Make the image take up max width
-                maxWidth: 320, // Set max width to 300 or any desired value
-                aspectRatio: 2, // Define aspect ratio (width:height ratio) for rectangular shape
-              }}
-            />
-          ) : (
-            <VehicleImage
-              source={require("../../../assets/images/no_image.jpeg")}
-              style={{
-                width: "100%",
-                maxWidth: 300,
-                aspectRatio: 2,
-              }}
-            />
-          )}
-        </View>
-
-        <View
-          style={{
-            display: "flex",
-            flexDirection: "row",
-            justifyContent: "space-around",
-          }}
-        >
-          {!vehicleInfo.imageUrl ||
-          vehicleInfo.imageUrl.includes("no_image") ? (
-            <Button
-              title="Add Image"
-              onPress={() =>
-                pickImage(setVehicleInfo, route, setMessage, setMessageType)
+        {/* Vehicle Selection Picker Buttons */}
+        <View style={{ padding: 10 }}>
+          <Picker
+            selectedValue={selectedVehicle?.plate || ""}
+            onValueChange={(itemValue) => {
+              if (!itemValue) {
+                setSelectedVehicle(null);
+                return;
               }
-            />
-          ) : (
-            <>
-              <Button
-                title="Change Image"
-                onPress={() =>
-                  changeImage(
-                    vehicleInfo,
-                    setVehicleInfo,
-                    route,
-                    setMessage,
-                    setMessageType
-                  )
-                }
+              const selected = vehicleInfo.find((v) => v.plate === itemValue);
+              setSelectedVehicle(selected);
+            }}
+            style={{ height: 50, width: "100%" }}
+          >
+            <Picker.Item label="Select vehicle..." value="" color="#888" />
+            {vehicleInfo.map((vehicle) => (
+              <Picker.Item
+                key={vehicle.plate}
+                label={`${vehicle.make} ${vehicle.model}`}
+                value={vehicle.plate}
               />
-              <Button
-                title="Delete Image"
-                onPress={() =>
-                  deleteImage(
-                    vehicleInfo.imageUrl,
-                    route?.params?.email,
-                    setMessage,
-                    setMessageType,
-                    setVehicleInfo
-                  )
-                }
-              />
-            </>
-          )}
+            ))}
+          </Picker>
         </View>
 
-        <VehicleCard>
-          <VehicleRow>
-            <VehicleLabel>Make:</VehicleLabel>
-            <VehicleValue>{vehicleInfo.make}</VehicleValue>
-          </VehicleRow>
+        {/* Selected Vehicle Details */}
+        {selectedVehicle ? (
+          <>
+            <View style={{ alignItems: "center" }}>
+              {selectedVehicle?.imageUrl ? (
+                <VehicleImage
+                  source={{ uri: `${baseAPIUrl}${selectedVehicle.imageUrl}` }}
+                  style={{
+                    width: "100%",
+                    maxWidth: 320,
+                    aspectRatio: 2,
+                    backgroundColor: "lightgray",
+                  }}
+                  resizeMode="contain"
+                />
+              ) : (
+                <VehicleImage
+                  source={require("../../../assets/images/no_image.jpeg")}
+                  style={{
+                    width: "100%",
+                    maxWidth: 300,
+                    aspectRatio: 2,
+                    backgroundColor: "lightgray",
+                  }}
+                  resizeMode="contain"
+                />
+              )}
+            </View>
 
-          <VehicleRow>
-            <VehicleLabel>Model:</VehicleLabel>
-            <VehicleValue>{vehicleInfo.model}</VehicleValue>
-          </VehicleRow>
+            <View
+              style={{
+                flexDirection: "row",
+                justifyContent: "space-around",
+                marginVertical: 10,
+              }}
+            >
+              {!selectedVehicle.imageUrl ||
+              selectedVehicle.imageUrl.includes("no_image") ? (
+                <Button
+                  title="Add Image"
+                  onPress={() =>
+                    pickImageCar(
+                      selectedVehicle,
+                      (updatedVehicle) => {
+                        const updated = vehicleInfo.map((v) =>
+                          v.plate === updatedVehicle.plate ? updatedVehicle : v
+                        );
+                        setVehicleInfo(updated);
+                        setSelectedVehicle(updatedVehicle);
+                      },
+                      route,
+                      setMessage,
+                      setMessageType
+                    )
+                  }
+                />
+              ) : (
+                <>
+                  <Button
+                    title="Change Image"
+                    onPress={() =>
+                      changeImageCar(
+                        selectedVehicle,
+                        (updatedVehicle) => {
+                          const updated = vehicleInfo.map((v) =>
+                            v.plate === updatedVehicle.plate
+                              ? updatedVehicle
+                              : v
+                          );
+                          setVehicleInfo(updated);
+                          setSelectedVehicle(updatedVehicle);
+                        },
+                        route,
+                        setMessage,
+                        setMessageType
+                      )
+                    }
+                  />
+                  <Button
+                    title="Delete Image"
+                    onPress={() =>
+                      deleteImage(
+                        selectedVehicle.imageUrl,
+                        route?.params?.email,
+                        setMessage,
+                        setMessageType,
+                        (newImageUrl) => {
+                          const updated = vehicleInfo.map((v) =>
+                            v.plate === selectedVehicle.plate
+                              ? { ...v, imageUrl: newImageUrl }
+                              : v
+                          );
+                          setVehicleInfo(updated);
+                          setSelectedVehicle((prev) => ({
+                            ...prev,
+                            imageUrl: newImageUrl,
+                          }));
+                        }
+                      )
+                    }
+                  />
+                </>
+              )}
+            </View>
 
-          <VehicleRow>
-            <VehicleLabel>Year:</VehicleLabel>
-            <VehicleValue>{vehicleInfo.year}</VehicleValue>
-          </VehicleRow>
-
-          <VehicleRow>
-            <VehicleLabel>Color:</VehicleLabel>
-            <VehicleValue>{vehicleInfo.color}</VehicleValue>
-          </VehicleRow>
-
-          <VehicleRow>
-            <VehicleLabel>Plate:</VehicleLabel>
-            <VehicleValue>{vehicleInfo.plate}</VehicleValue>
-          </VehicleRow>
-
-          <VehicleRow>
-            <VehicleLabel>Mileage:</VehicleLabel>
-            <VehicleValue>{vehicleInfo.mileage} km</VehicleValue>
-          </VehicleRow>
-
-          <VehicleRow>
-            <VehicleLabel>Fuel Type:</VehicleLabel>
-            <VehicleValue>{vehicleInfo.fuelType}</VehicleValue>
-          </VehicleRow>
-
-          <VehicleRow>
-            <VehicleLabel>Transmission:</VehicleLabel>
-            <VehicleValue>{vehicleInfo.transmissionType}</VehicleValue>
-          </VehicleRow>
-
-          <Line />
-
-          <VehicleLabel>Average rating:</VehicleLabel>
-          <VehicleValue>{vehicleInfo.ratings.average}</VehicleValue>
-
-          <VehicleLabel>Ratings count:</VehicleLabel>
-          <VehicleValue>{vehicleInfo.ratings.count}</VehicleValue>
-        </VehicleCard>
+            <VehicleCard>
+              <VehicleRow>
+                <VehicleLabel>Make:</VehicleLabel>
+                <VehicleValue>{selectedVehicle.make}</VehicleValue>
+              </VehicleRow>
+              <VehicleRow>
+                <VehicleLabel>Model:</VehicleLabel>
+                <VehicleValue>{selectedVehicle.model}</VehicleValue>
+              </VehicleRow>
+              <VehicleRow>
+                <VehicleLabel>Year:</VehicleLabel>
+                <VehicleValue>{selectedVehicle.year}</VehicleValue>
+              </VehicleRow>
+              <VehicleRow>
+                <VehicleLabel>Color:</VehicleLabel>
+                <VehicleValue>{selectedVehicle.color}</VehicleValue>
+              </VehicleRow>
+              <VehicleRow>
+                <VehicleLabel>Plate:</VehicleLabel>
+                <VehicleValue>{selectedVehicle.plate}</VehicleValue>
+              </VehicleRow>
+              <Line />
+            </VehicleCard>
+          </>
+        ) : (
+          <VehicleCard>
+            <VehicleRow>
+              <VehicleLabel>No vehicle selected.</VehicleLabel>
+            </VehicleRow>
+          </VehicleCard>
+        )}
       </VehicleContainer>
     </ScrollView>
   );

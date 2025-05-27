@@ -1,24 +1,26 @@
-import React, { useState } from 'react';
-import { StatusBar } from 'expo-status-bar';
+import { StatusBar } from "expo-status-bar";
 
-import { resetLoginScreen } from './../utils/resetLoginScreen';
+import { resetLoginScreen } from "./../utils/resetLoginScreen";
 
+import { baseAPIUrl } from "../components/shared";
 import {
-  InnerContainer,
-  PageTitle,
-  SubTitle,
-  StyledFormArea,
-  StyledButton,
+  Avatar,
   ButtonText,
+  InnerContainer,
   Line,
+  PageTitle,
+  StyledButton,
+  StyledFormArea,
+  SubTitle,
   WelcomeContainer,
   WelcomeImage,
-  Avatar,
-} from './../components/styles';
+} from "./../components/styles";
 
 const Welcome = ({ navigation, route }) => {
   const { name, email, photoUrl } = route.params;
-  const AvatarImg = photoUrl ? { uri: photoUrl } : require('./../assets/images/logo.png');
+  const AvatarImg = photoUrl
+    ? { uri: `${baseAPIUrl}${photoUrl}` }
+    : require("./../assets/images/logo.png");
 
   return (
     <>
@@ -27,10 +29,13 @@ const Welcome = ({ navigation, route }) => {
         <WelcomeImage resizeMode="cover" source={AvatarImg} />
         <WelcomeContainer>
           <PageTitle welcome={true}>Welcome, Buddy!</PageTitle>
-          <SubTitle welcome={true}>{name || 'Unable to load'}</SubTitle>
-          <SubTitle welcome={true}>{email || 'Unable to load'}</SubTitle>
+          <SubTitle welcome={true}>{name || "Unable to load"}</SubTitle>
+          <SubTitle welcome={true}>{email || "Unable to load"}</SubTitle>
           <StyledFormArea>
-            <Avatar resizeMode="cover" source={require('./../assets/images/travelBuddy.png')} />
+            <Avatar
+              resizeMode="cover"
+              source={require("./../assets/images/travelBuddy.png")}
+            />
             <Line />
             <StyledButton onPress={() => resetLoginScreen(navigation)}>
               <ButtonText>Logout</ButtonText>
