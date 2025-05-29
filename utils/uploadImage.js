@@ -36,7 +36,7 @@ export const uploadImageToServer = async (
   });
 
   try {
-    // 1. Upload image and get URL
+    /* 1. Upload image and get URL */
     const uploadRes = await axios.post(
       `${baseAPIUrl}/upload/uploadImage`,
       formData,
@@ -48,20 +48,16 @@ export const uploadImageToServer = async (
     );
 
     if (uploadRes.data.statusText === "SUCCESS") {
-      // uploadedUrl = uploadRes.data.imageUrl.replace(
-      //   "http://localhost:3000",
-      //   baseAPIUrl
-      // );
       uploadedUrl = uploadRes.data.imageUrl;
 
-      // 2. Delete old image if exists (optional)
+      /* 2. Delete old image if exists (optional) */
       if (imageFileName) {
         await axios.post(`${baseAPIUrl}/upload/deleteImage`, {
           image: imageFileName,
         });
       }
 
-      // 3. Update user with new image URL
+      /* 3. Update user with new image URL */
       const updateRes = await axios.post(
         `${baseAPIUrl}/upload/updateUserImage`,
         {
@@ -71,7 +67,7 @@ export const uploadImageToServer = async (
       );
 
       if (updateRes.data.statusText === "SUCCESS") {
-        // Update local state with new image url
+        /* Update local state with new image url */
 
         setVehicleInfo((prevState) => ({
           ...prevState,
@@ -135,7 +131,7 @@ export const uploadCarImageToServer = async (
   });
 
   try {
-    // 1. Upload image and get URL
+    /* 1. Upload image and get URL */
     const uploadRes = await axios.post(
       `${baseAPIUrl}/upload/uploadImage`,
       formData,
@@ -147,20 +143,16 @@ export const uploadCarImageToServer = async (
     );
 
     if (uploadRes.data.statusText === "SUCCESS") {
-      // uploadedUrl = uploadRes.data.imageUrl.replace(
-      //   "http://localhost:3000",
-      //   baseAPIUrl
-      // );
       uploadedUrl = uploadRes.data.imageUrl;
 
-      // 2. Delete old image if exists (optional)
+      /* 2. Delete old image if exists (optional) */
       if (imageFileName) {
         await axios.post(`${baseAPIUrl}/upload/deleteImage`, {
           image: imageFileName,
         });
       }
 
-      // 3. Update user with new image URL
+      /* 3. Update user with new image URL */
       const updateRes = await axios.post(
         `${baseAPIUrl}/upload/updateUserCarImage`,
         {
@@ -171,8 +163,7 @@ export const uploadCarImageToServer = async (
       );
 
       if (updateRes.data.statusText === "SUCCESS") {
-        // Update local state with new image url
-
+        /* Update local state with new image url */
         setVehicleInfo((prevState) => ({
           ...prevState,
           imageUrl: uploadedUrl,
@@ -208,93 +199,6 @@ export const uploadCarImageToServer = async (
   return uploadedUrl;
 };
 
-/*
-export const uploadTripImageToServer = async (
-  imageUrl,
-  imageFileName,
-  //email,
-  setMessage,
-  setMessageType
-) => {
-  let uploadedUrl = "";
-
-  console.log(`imageUrl`, imageUrl);
-  const formData = new FormData();
-  let uriParts = imageUrl.split(".");
-  const fileType = uriParts[uriParts.length - 1];
-
-  // const response = await fetch(imageUrl);
-  // const blob = await response.blob();
-
-  if (!imageUrl.includes("file:")) {
-    uriParts = [
-      "file:///data/user/0/host",
-      "exp",
-      `exponent/cache/ExperienceData/%2540anonymous%252Ftravel_sharing-9fa2088d-344c-420e-8cf7-325175d47060/ImagePicker/${
-        imageUrl.split("/").pop().split(".")[0]
-      }`,
-      "jpeg",
-    ];
-
-    imageUrl = imageUrl.replace(
-      "/uploads/",
-      "file:///data/user/0/host.exp.exponent/cache/ExperienceData/%2540anonymous%252Ftravel_sharing-9fa2088d-344c-420e-8cf7-325175d47060/ImagePicker/"
-    );
-  }
-  console.log(`uriParts`, uriParts);
-  console.log(`fileType`, fileType);
-  console.log(`uploadImage::imageUrl=`, imageUrl);
-
-  //formData.append("email", email);
-  formData.append("oldImage", imageFileName);
-  formData.append("image", {
-    uri: imageUrl,
-    name: `vehicle_image.${fileType}`,
-    type: `image/${fileType}`,
-  });
-
-  try {
-    // 1. Upload image and get URL
-    const uploadRes = await axios.post(
-      `${baseAPIUrl}/upload/uploadImage`,
-      formData,
-      {
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
-      }
-    );
-
-    if (uploadRes.data.statusText === "SUCCESS") {
-      // uploadedUrl = uploadRes.data.imageUrl.replace(
-      //   "http://localhost:3000",
-      //   baseAPIUrl
-      // );
-      uploadedUrl = uploadRes.data.imageUrl;
-
-      // 2. Delete old image if exists (optional)
-      if (imageFileName) {
-        await axios.post(`${baseAPIUrl}/upload/deleteImage`, {
-          image: imageFileName,
-        });
-      }
-    } else {
-      handleMessage(
-        setMessage,
-        setMessageType,
-        "Image upload failed",
-        "FAILED"
-      );
-    }
-  } catch (error) {
-    console.error(error);
-    handleMessage(setMessage, setMessageType, "Image upload error", "FAILED");
-  }
-
-  return uploadedUrl;
-};
-*/
-
 export const uploadTripImageToServer = async (
   imageUrl,
   imageFileName,
@@ -303,7 +207,7 @@ export const uploadTripImageToServer = async (
 ) => {
   let uploadedUrl = "";
 
-  // ✅ If it's already uploaded (e.g., from DB), just return the path
+  /* If it's already uploaded (e.g., from DB), just return the path */
   if (!imageUrl.includes("file://")) {
     console.log("Image is already uploaded, skipping upload.");
     return imageUrl;
@@ -312,9 +216,9 @@ export const uploadTripImageToServer = async (
   const formData = new FormData();
 
   const uriParts = imageUrl.split(".");
-  const fileType = uriParts[uriParts.length - 1]; // e.g., 'jpg' or 'png'
+  const fileType = uriParts[uriParts.length - 1];
 
-  // ✅ For safety, check if fileType is valid
+  /* For safety, check if fileType is valid */
   if (!["jpg", "jpeg", "png"].includes(fileType.toLowerCase())) {
     handleMessage(
       setMessage,
@@ -325,7 +229,7 @@ export const uploadTripImageToServer = async (
     return "";
   }
 
-  formData.append("oldImage", imageFileName); // optional: for deletion
+  formData.append("oldImage", imageFileName);
 
   formData.append("image", {
     uri: imageUrl,
@@ -349,7 +253,7 @@ export const uploadTripImageToServer = async (
     if (uploadRes.data.statusText === "SUCCESS") {
       uploadedUrl = uploadRes.data.imageUrl;
 
-      // ✅ Optionally delete the old image
+      /* Optionally delete the old image */
       if (imageFileName && imageFileName !== "logo.png") {
         await axios.post(`${baseAPIUrl}/upload/deleteImage`, {
           image: imageFileName,

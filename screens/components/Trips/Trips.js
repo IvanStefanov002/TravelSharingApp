@@ -40,6 +40,13 @@ import {
   LocationContainer,
   LocationText,
   NoTripsText,
+  OptionButton,
+  OptionsContainer,
+  OptionText,
+  RadioButton,
+  RadioCircle,
+  RadioContainer,
+  RadioText,
   RedText,
   StyledInput,
   StyledScrollView,
@@ -58,10 +65,10 @@ export default function Trips({ navigation }) {
 
   /* activeTab param is passed by Home screen's buttons */
   const route = useRoute();
-  const initialTab = route.params?.activeTab || "explore"; // default if not passed
+  const initialTab =
+    route.params?.activeTab || "explore"; /* default if not passed */
   const userEmail = route.params?.email || "guest@tu-sofia.bg";
 
-  //StatusBar.setHidden(false);
   const [currentPage, setCurrentPage] = useState(1);
   const tripsPerPage = 3;
 
@@ -138,7 +145,7 @@ export default function Trips({ navigation }) {
           },
         };
       }
-      return prev; // fallback
+      return prev;
     });
   };
 
@@ -209,9 +216,7 @@ export default function Trips({ navigation }) {
 
     if (success) {
       resetTripFields();
-
-      // Optionally navigate or reset form
-      navigation.navigate("Home"); // Or another screen
+      navigation.navigate("Home");
     }
   };
 
@@ -224,6 +229,11 @@ export default function Trips({ navigation }) {
           // 1. Fetch all trips
           const tripResponse = await axios.get(`${baseAPIUrl}/trips/fetchData`);
 
+          /*
+           tezi zaqvki trqbva da mogat da se pravqt samo ot user-ri. Kato vlezne(login) user da se suzdade JWT
+           token koito da se izpolzva ot nego za dostup to rest api-to. da izpolzvam JWT v express.
+          */
+
           /* for each trip params */
           tripResponse.data = tripResponse.data.map((trip) => {
             /* replace datetime */
@@ -235,10 +245,6 @@ export default function Trips({ navigation }) {
 
             /* replace image url */
             if (trip.vehicle_image) {
-              // trip.vehicle_image = trip.vehicle_image.replace(
-              //   "http://localhost:3000",
-              //   baseAPIUrl
-              // );
               trip.vehicle_image = trip.vehicle_image;
             }
 
@@ -267,12 +273,12 @@ export default function Trips({ navigation }) {
         }
       };
 
-      // Set tab if passed
+      /* Set tab if passed */
       if (route.params?.activeTab) {
         setActiveTab(route.params.activeTab);
       }
 
-      // reset filters
+      /* reset filters */
       setFilter({
         origin: "",
         destination: "",
@@ -289,10 +295,6 @@ export default function Trips({ navigation }) {
 
   const [selectedCar, setSelectedCar] = useState(null);
 
-  // const handleMessage = (msg, type) => {
-  //   console.log(`[${type}] ${msg}`);
-  // };
-
   const handleFetchUserVehicle = async () => {
     if (!userEmail) {
       handleMessage("User email is missing", "FAILED");
@@ -300,6 +302,7 @@ export default function Trips({ navigation }) {
     }
 
     setLoading(true);
+    5;
     await fetchVehicleInfo(
       userEmail,
       setVehicleInfo,
@@ -313,7 +316,7 @@ export default function Trips({ navigation }) {
 
   const handleOpenModal = async () => {
     setModalVisible(true);
-    await handleFetchUserVehicle(); // fetch vehicle data when modal opens
+    await handleFetchUserVehicle(); /* fetches vehicle data when modal opens */
   };
 
   const handlePickerChange = (value, fieldName) => {
@@ -377,13 +380,13 @@ export default function Trips({ navigation }) {
   const renderOptions = (label, options, path) => (
     <InputGroup>
       <Label>{label}</Label>
-      <View style={styles.optionsContainer}>
+      <OptionsContainer>
         {options.map((option) => {
           const selected = tripData.checkout_options?.[path]?.includes(option);
           return (
-            <TouchableOpacity
+            <OptionButton
               key={option}
-              style={[styles.optionButton, selected && styles.optionSelected]}
+              style={[selected && styles.optionSelected]}
               onPress={() => {
                 const currentValues = tripData.checkout_options?.[path] || [];
                 const updatedValues = selected
@@ -392,16 +395,15 @@ export default function Trips({ navigation }) {
                 onChange(`checkout_options.${path}`, updatedValues);
               }}
             >
-              <Text style={styles.optionText}>{option}</Text>
-            </TouchableOpacity>
+              <OptionText>{option}</OptionText>
+            </OptionButton>
           );
         })}
-      </View>
+      </OptionsContainer>
     </InputGroup>
   );
 
   return (
-    //<KeyboardAvoidingWrapper>
     <StyledScrollView>
       <View
         style={{
@@ -588,7 +590,7 @@ export default function Trips({ navigation }) {
                       position: "absolute",
                       top: 10,
                       right: 10,
-                      backgroundColor: "rgba(255, 255, 255, 0.8)", // optional: makes text readable on image
+                      backgroundColor: "rgba(255, 255, 255, 0.8)",
                       paddingHorizontal: 8,
                       paddingVertical: 4,
                       borderRadius: 5,
@@ -812,7 +814,6 @@ export default function Trips({ navigation }) {
                           setModalVisible(false);
 
                           /* set params of the fields */
-                          //setImageName(item.image_url); /* questionable */
                           tripData.vehicle_image = item.image_url;
                           onChangeCar("make", item.make);
                           onChangeCar("model", item.model);
@@ -1036,7 +1037,7 @@ export default function Trips({ navigation }) {
                 onChange={(event, selectedDate) => {
                   setShowDatePicker(false);
                   if (selectedDate) {
-                    // merge selected date with existing time
+                    /* merge selected date with existing time */
                     const updatedDate = new Date(tripData.departure_datetime);
                     updatedDate.setFullYear(selectedDate.getFullYear());
                     updatedDate.setMonth(selectedDate.getMonth());
@@ -1045,7 +1046,7 @@ export default function Trips({ navigation }) {
                       ...tripData,
                       departure_datetime: updatedDate,
                     });
-                    setShowTimePicker(true); // Show time picker next
+                    setShowTimePicker(true);
                   }
                 }}
               />
@@ -1078,63 +1079,47 @@ export default function Trips({ navigation }) {
           <InputGroup>
             <Label>Pets allowed</Label>
             <View style={styles.radioContainer}>
-              <TouchableOpacity
-                style={styles.radioButton}
-                onPress={() => onChange("is_pets_allowed", "yes")}
-              >
-                <View
+              <RadioButton onPress={() => onChange("is_pets_allowed", "yes")}>
+                <RadioCircle
                   style={[
-                    styles.radioCircle,
                     tripData.is_pets_allowed === "yes" && styles.selected,
                   ]}
                 />
-                <Text style={styles.radioText}>Yes</Text>
-              </TouchableOpacity>
+                <RadioText>Yes</RadioText>
+              </RadioButton>
 
-              <TouchableOpacity
-                style={styles.radioButton}
-                onPress={() => onChange("is_pets_allowed", "no")}
-              >
-                <View
-                  style={[
-                    styles.radioCircle,
-                    tripData.is_pets_allowed === "no" && styles.selected,
-                  ]}
+              <RadioButton onPress={() => onChange("is_pets_allowed", "no")}>
+                <RadioCircle
+                  style={[tripData.is_pets_allowed === "no" && styles.selected]}
                 />
-                <Text style={styles.radioText}>No</Text>
-              </TouchableOpacity>
+                <RadioText>No</RadioText>
+              </RadioButton>
             </View>
           </InputGroup>
 
           <InputGroup>
             <Label>Smoking allowed</Label>
-            <View style={styles.radioContainer}>
-              <TouchableOpacity
-                style={styles.radioButton}
+            <RadioContainer>
+              <RadioButton
                 onPress={() => onChange("is_allowed_smoking", "yes")}
               >
-                <View
+                <RadioCircle
                   style={[
-                    styles.radioCircle,
                     tripData.is_allowed_smoking === "yes" && styles.selected,
                   ]}
                 />
-                <Text style={styles.radioText}>Yes</Text>
-              </TouchableOpacity>
+                <RadioText>Yes</RadioText>
+              </RadioButton>
 
-              <TouchableOpacity
-                style={styles.radioButton}
-                onPress={() => onChange("is_allowed_smoking", "no")}
-              >
-                <View
+              <RadioButton onPress={() => onChange("is_allowed_smoking", "no")}>
+                <RadioCircle
                   style={[
-                    styles.radioCircle,
                     tripData.is_allowed_smoking === "no" && styles.selected,
                   ]}
                 />
-                <Text style={styles.radioText}>No</Text>
-              </TouchableOpacity>
-            </View>
+                <RadioText>No</RadioText>
+              </RadioButton>
+            </RadioContainer>
           </InputGroup>
 
           <InputGroup>
@@ -1171,58 +1156,15 @@ export default function Trips({ navigation }) {
         </CreateScreenTripContainer>
       )}
     </StyledScrollView>
-    //</KeyboardAvoidingWrapper>
   );
 }
 
 const styles = StyleSheet.create({
-  radioContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginTop: 10,
-  },
-  radioButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginRight: 20,
-  },
-  radioCircle: {
-    height: 20,
-    width: 20,
-    borderRadius: 10,
-    borderWidth: 2,
-    borderColor: "#6d28d9",
-    alignItems: "center",
-    justifyContent: "center",
-    marginRight: 8,
-  },
   selected: {
     backgroundColor: "#6d28d9",
-  },
-  radioText: {
-    fontSize: 16,
-    color: "#333",
-  },
-  optionsContainer: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 10,
-    marginTop: 10,
-  },
-  optionButton: {
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: "#ccc",
-    marginRight: 10,
-    marginBottom: 10,
   },
   optionSelected: {
     backgroundColor: "#6d28d9",
     borderColor: "#6d28d9",
-  },
-  optionText: {
-    color: "#333",
   },
 });

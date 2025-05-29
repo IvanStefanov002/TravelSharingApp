@@ -38,11 +38,6 @@ import {
 } from "./../../../components/styles";
 
 export default function TripDetails({ navigation }) {
-  // <StatusBar
-  //   backgroundColor="transparent"
-  //   translucent
-  // />;
-
   const route = useRoute();
   const { tripData } = route.params;
   const { loggedUserId } = route.params;
@@ -66,7 +61,7 @@ export default function TripDetails({ navigation }) {
   /* for card options */
   const [expandedSection, setExpandedSection] = useState(null);
 
-  // Fetch trip details once when the component mounts
+  /* Fetch trip details once when the component mounts */
   const fetchPassangerInfo = async () => {
     try {
       const info = {};
@@ -84,7 +79,7 @@ export default function TripDetails({ navigation }) {
 
   useFocusEffect(
     useCallback(() => {
-      fetchPassangerInfo(); // re-fetch the trip data
+      fetchPassangerInfo();
     }, [])
   );
 
@@ -99,11 +94,6 @@ export default function TripDetails({ navigation }) {
       Alert.alert("Success", result.message, [
         {
           text: "OK",
-          // onPress: () =>
-          //   navigation.navigate("HomeTabs", {
-          //     screen: "Trips",
-          //     params: { activeTab: "explore" },
-          //   }),
           onPress: () => navigation.goBack(),
         },
       ]);
@@ -119,11 +109,6 @@ export default function TripDetails({ navigation }) {
       Alert.alert("Success", result.message, [
         {
           text: "OK",
-          // onPress: () =>
-          //   navigation.navigate("HomeTabs", {
-          //     screen: "Trips",
-          //     params: { activeTab: "explore" },
-          //   }),
           onPress: () => navigation.goBack(),
         },
       ]);
@@ -277,7 +262,7 @@ export default function TripDetails({ navigation }) {
     }
   };
 
-  // Make sure trip and driver exist before rendering.
+  /* Make sure trip and driver exist before rendering. */
   if (!trip) {
     return <Text>Trip details are not available.</Text>;
   }
@@ -298,24 +283,6 @@ export default function TripDetails({ navigation }) {
             position: "relative",
           }}
         >
-          {/* Text above the image */}
-          {/* <Text
-            style={{
-              color: "#111827",
-              fontWeight: "bold",
-              backgroundColor: "rgba(255, 255, 255, 0.7)",
-              paddingTop: 10,
-              paddingRight: 20,
-              paddingBottom: 10,
-              paddingLeft: 20,
-              borderTopLeftRadius: 12,
-              borderTopRightRadius: 12,
-              zIndex: 1,
-            }}
-          >
-            Vehicle image
-          </Text> */}
-
           {/* Image below the text */}
           {trip && trip.vehicle_image ? (
             <Image
@@ -444,7 +411,6 @@ export default function TripDetails({ navigation }) {
               }
               size={20}
               color="#4b5563"
-              //style={{ paddingLeft: 130 }}
             />
           </TouchableOpacity>
           {loggedUserId === trip.driver_id && (
@@ -697,7 +663,6 @@ export default function TripDetails({ navigation }) {
         )}
 
         {loggedUserId !== trip.driver_id ? (
-          // Non-driver user buttons
           <View
             style={{
               display: "flex",
@@ -757,7 +722,7 @@ export default function TripDetails({ navigation }) {
           </View>
         ) : loggedUserId === trip.driver_id &&
           trip.article_status !== "finished" ? (
-          // Driver and article is not finished → show archive
+          /* Driver and article is not finished → show archive button */
           <View
             style={{
               display: "flex",
@@ -989,12 +954,6 @@ export default function TripDetails({ navigation }) {
     </ScrollView>
   );
 }
-
-const contactRowStyle = {
-  flexDirection: "row",
-  alignItems: "center",
-  marginBottom: 12,
-};
 
 const contactTextStyle = {
   color: "#374151",

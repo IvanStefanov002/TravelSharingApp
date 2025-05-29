@@ -4,20 +4,22 @@ import { useCallback, useState } from "react";
 import { StatusBar } from "react-native";
 import { baseAPIUrl } from "../../../components/shared";
 
-import { Line } from "@/components/styles";
 import {
-  ActivityIndicator,
-  Image,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-} from "react-native";
+  Card,
+  EmptyTextTh,
+  ImageTh,
+  Line,
+  MetaTh,
+  SectionTitleTH,
+  TitleTh,
+} from "@/components/styles";
+import { ActivityIndicator, ScrollView, StyleSheet } from "react-native";
 
 const TripHistory = ({ route }) => {
   StatusBar.setHidden(true);
 
   const userId = route?.params?.id ?? "undefined";
+  const isDriver = route?.params?.roles.includes("driver") ? true : false;
 
   const [trips, setTrips] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -83,60 +85,55 @@ const TripHistory = ({ route }) => {
         <ActivityIndicator size="large" color="#6d28d9" />
       ) : (
         <>
-          {/* Hosted Trips */}
-          <Text style={styles.sectionTitle}>Trips You've Hosted</Text>
-          <Line></Line>
-          {hostedTrips.length > 0 ? (
-            hostedTrips.map((trip) => (
-              <View style={styles.card} key={trip._id}>
-                <Image
-                  source={{ uri: `${baseAPIUrl}${trip.vehicle_image}` }}
-                  style={styles.image}
-                />
-                <View style={styles.details}>
-                  <Text style={styles.title}>{trip.title}</Text>
-                  <Text style={styles.meta}>
-                    Direction: {trip.start_location.city} →{" "}
-                    {trip.end_location.city}
-                  </Text>
-                  <Text style={styles.meta}>
-                    Departure: {trip.departure_datetime}
-                  </Text>
-                </View>
-              </View>
-            ))
-          ) : (
-            <Text style={styles.emptyText}>No hosted trips found.</Text>
+          {isDriver && (
+            <>
+              {/* Hosted Trips */}
+              <SectionTitleTH>Trips you've hosted</SectionTitleTH>
+              <Line></Line>
+              {hostedTrips.length > 0 ? (
+                hostedTrips.map((trip) => (
+                  <Card key={trip._id}>
+                    <ImageTh
+                      source={{ uri: `${baseAPIUrl}${trip.vehicle_image}` }}
+                    />
+                    <DetailsContainer>
+                      <TitleTh>{trip.title}</TitleTh>
+                      <MetaTh>
+                        Direction: {trip.start_location.city} →{" "}
+                        {trip.end_location.city}
+                      </MetaTh>
+                      <MetaTh>Departure: {trip.departure_datetime}</MetaTh>
+                    </DetailsContainer>
+                  </Card>
+                ))
+              ) : (
+                <EmptyTextTh>No hosted trips found.</EmptyTextTh>
+              )}
+            </>
           )}
 
           {/* Participated Trips */}
-          <Text style={styles.sectionTitle}>Trips You've Participated In</Text>
+          <SectionTitleTH>Trips You've Participated In</SectionTitleTH>
           <Line></Line>
           {joinedTrips.length > 0 ? (
             joinedTrips.map((trip) => (
-              <View style={styles.card} key={trip._id}>
-                <Image
+              <Card key={trip._id}>
+                <ImageTh
                   source={{ uri: `${baseAPIUrl}${trip.vehicle_image}` }}
-                  style={styles.image}
                 />
-                <View style={styles.details}>
-                  <Text style={styles.title}>{trip.title}</Text>
+                <DetailsContainer>
+                  <TitleTh>{trip.title}</TitleTh>
                   {/* <Text>{trip.trip_description}</Text> */}
-                  <Text style={styles.meta}>
+                  <MetaTh>
                     Direction: {trip.start_location.city} →{" "}
                     {trip.end_location.city}
-                  </Text>
-                  <Text style={styles.meta}>
-                    Departure: {trip.departure_datetime}
-                  </Text>
-                  {/* <Text style={styles.meta}>
-                    Driver Rating: {trip.rating ?? "N/A"}
-                  </Text> */}
-                </View>
-              </View>
+                  </MetaTh>
+                  <MetaTh>Departure: {trip.departure_datetime}</MetaTh>
+                </DetailsContainer>
+              </Card>
             ))
           ) : (
-            <Text style={styles.emptyText}>No participated trips found.</Text>
+            <EmptyTextTh>No participated trips found.</EmptyTextTh>
           )}
         </>
       )}
@@ -149,52 +146,6 @@ const styles = StyleSheet.create({
     padding: 15,
     paddingTop: 70,
     backgroundColor: "#f9f9f9",
-  },
-  sectionTitle: {
-    fontSize: 20,
-    fontWeight: "bold",
-    marginTop: 20,
-    color: "#333",
-    alignSelf: "center",
-  },
-  card: {
-    flexDirection: "row",
-    backgroundColor: "#fff",
-    marginBottom: 15,
-    borderRadius: 10,
-    overflow: "hidden",
-    shadowColor: "#000",
-    shadowOpacity: 0.1,
-    shadowRadius: 5,
-    elevation: 3,
-  },
-  image: {
-    width: 150,
-    height: 150,
-    //resizeMode: "stretch",
-    resizeMode: "contain",
-  },
-  details: {
-    flex: 1,
-    padding: 12,
-    justifyContent: "center",
-  },
-  title: {
-    fontSize: 16,
-    fontWeight: "600",
-    marginBottom: 5,
-  },
-  meta: {
-    fontSize: 14,
-    color: "#666",
-    marginTop: 2,
-    fontWeight: 500,
-  },
-  emptyText: {
-    color: "#888",
-    fontStyle: "italic",
-    marginBottom: 10,
-    textAlign: "center",
   },
 });
 

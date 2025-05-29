@@ -102,8 +102,8 @@ const Login = ({ navigation, route }) => {
 
       const user = await res.json();
 
-      // 👇 Save token in state for future logout
-      setAccessToken(token); // you'll need to define this with useState()
+      /* Save token in state for future logout */
+      setAccessToken(token);
 
       navigation.navigate("Welcome", {
         name: user.name,
@@ -128,7 +128,8 @@ const Login = ({ navigation, route }) => {
         handleMessage(message, "FAILED");
       } else {
         handleMessage("Login successful!", "SUCCESS");
-        //navigation.navigate('Welcome', { ...data[0] });
+
+        /* navigate to home screen of the application */
         navigation.navigate("HomeTabs", { ...data[0] });
       }
     } catch (error) {
@@ -240,7 +241,7 @@ const Login = ({ navigation, route }) => {
                           err
                         );
                       } finally {
-                        promptAsync(); // continue login
+                        promptAsync(); /* continue login */
                       }
                     }}
                   >

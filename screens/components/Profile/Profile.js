@@ -27,6 +27,10 @@ import {
 export default function Profile({ navigation, route }) {
   const { id, roles, name, email, photoUrl } = route.params;
 
+  // da razucha useState kakvo pravi
+  // zashto ima functionalni komponenti
+  // zashto e function a ne klas
+
   const [modalVisible, setModalVisible] = useState(false);
   const [message, setMessage] = useState("");
   const [messageType, setMessageType] = useState("");
@@ -158,7 +162,7 @@ export default function Profile({ navigation, route }) {
       label: "Trip History",
       icon: "time-outline",
       onPress: () => {
-        navigation.navigate("TripHistory", { id: user.id });
+        navigation.navigate("TripHistory", { id: user.id, roles: user.roles });
       },
     });
   }

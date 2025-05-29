@@ -48,10 +48,3 @@ const Welcome = ({ navigation, route }) => {
 };
 
 export default Welcome;
-
-/*
-onPress={() => {
-                nav
-                navigation.navigate('Login');
-              }}
-                */

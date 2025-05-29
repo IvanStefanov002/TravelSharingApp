@@ -108,8 +108,8 @@ const HomeTabs = ({ route }) => {
           tabBarActiveBackgroundColor: "#ca8a04",
           tabBarActiveTintColor: "#ffffff",
           tabBarInactiveTintColor: "#0007",
-          //headerShown: route.headerShown /* from route determine wheather to show header */,
-          //headerShown: route.name === 'More' ? false : true /* hide header to MORE tab */,
+          // headerShown: route.headerShown /* from route determine wheather to show header */,
+          // headerShown: route.name === 'More' ? false : true /* hide header to MORE tab */,
           headerTintColor: "#ca8a04",
           headerTransparent: false,
           headerTitle: () => {
@@ -174,7 +174,7 @@ const HomeTabs = ({ route }) => {
             email,
           }}
           options={({ route }) => ({
-            headerShown: route.params?.showHeader ?? false, // Default to false if not passed
+            headerShown: route.params?.showHeader ?? false,
           })}
         />
 
@@ -212,13 +212,6 @@ const HomeTabs = ({ route }) => {
             },
           }}
         />
-        {/* <Tab.Screen
-        name="More"
-        component={More}
-        options={({ route }) => ({
-          headerShown: route.params?.showHeader ?? false, // Default to false if not passed
-        })}
-      /> */}
       </Tab.Navigator>
     </>
   );
@@ -244,31 +237,6 @@ const styles = StyleSheet.create({
     margin: 10,
     borderRadius: 40,
     overflow: "hidden",
-  },
-  headerStyle: {
-    borderBottomWidth: 0,
-    shadowColor: "transparent",
-    shadowOpacity: 0,
-    elevation: 0,
-  },
-  headerContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingHorizontal: 10,
-  },
-  profileImage: {
-    width: 35,
-    height: 35,
-    borderRadius: 18,
-    marginRight: 10,
-  },
-  nameText: {
-    fontSize: 14,
-    fontWeight: "bold",
-  },
-  emailText: {
-    fontSize: 12,
-    color: "gray",
   },
   headerStyle: {
     backgroundColor: "#fff8",

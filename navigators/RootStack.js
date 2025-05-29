@@ -35,7 +35,7 @@ const RootStack = () => {
             headerStyle: { backgroundColor: "transparent" },
             headerTintColor: tertiary,
             headerTransparent: true,
-            //headerTitle: "",
+            /* headerTitle: "", */
             headerLeftContainerStyle: { paddingLeft: 20 },
           }}
           initialRouteName="Login"
@@ -101,7 +101,7 @@ const RootStack = () => {
             options={{
               title: "Vehicle Information",
               statusBarStyle: "light",
-              //statusBarHidden: true,
+              /* statusBarHidden: true, */
             }}
           />
 

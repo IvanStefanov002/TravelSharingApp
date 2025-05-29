@@ -241,6 +241,12 @@ export const InlineGroup = styled.View`
   align-items: center;
 `;
 
+/* HomeTabs screen designs */
+
+/* nothing yet */
+
+/* end of HomeTabs screen designs */
+
 /* Home screen designs */
 export const HomeContainer = styled.ScrollView`
   flex: 1;
@@ -315,6 +321,41 @@ export const CTAButtonText = styled.Text`
 /* end of home screen designs */
 
 /* Trips screen designs */
+export const RadioContainer = styled.View`
+  flex-direction: row;
+  align-items: center;
+  margin-top: 10px;
+`;
+
+export const RadioButton = styled.TouchableOpacity`
+  flex-direction: row;
+  align-items: center;
+  margin-right: 20px;
+`;
+
+export const RadioCircle = styled.View`
+  height: 20px;
+  width: 20px;
+  border-radius: 10px;
+  border-width: 2px;
+  border-color: #6d28d9;
+  align-items: center;
+  justify-content: center;
+  margin-right: 8px;
+`;
+
+export const RadioText = styled.Text`
+  font-size: 16px;
+  color: #333;
+`;
+
+export const OptionsContainer = styled.View`
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 10px;
+`;
+
 export const Container = styled.View`
   flex: 1;
   background-color: #f3f4f6;
@@ -325,6 +366,20 @@ export const StyledScrollView = styled.ScrollView`
   flex: 1;
   background-color: #f3f4f6;
   padding: 10px;
+`;
+
+export const OptionButton = styled.TouchableOpacity`
+  padding-vertical: 8px;
+  padding-horizontal: 12px;
+  border-radius: 20px;
+  border-width: 1px;
+  border-color: #ccc;
+  margin-right: 10px;
+  margin-bottom: 10px;
+`;
+
+export const OptionText = styled.Text`
+  color: #333;
 `;
 
 export const SearchContainer = styled.View`
@@ -406,18 +461,6 @@ export const TripDescription = styled.Text`
   margin-bottom: 10px;
 `;
 
-// export const LocationContainer = styled.View`
-//   flex-direction: row;
-//   align-items: center;
-//   margin-bottom: 10px;
-// `;
-
-// export const LocationText = styled.Text`
-//   margin-left: 5px;
-//   font-size: 14px;
-//   color: #555;
-// `;
-
 export const TripsCTAButton = styled.TouchableOpacity`
   background-color: #6d28d9;
   padding: 10px;
@@ -444,8 +487,62 @@ export const TripDriverNote = styled.Text`
 `;
 /* end of trips screenDesign */
 
+/* TripHistory screen designs */
+export const SectionTitleTH = styled.Text`
+  font-size: 20px;
+  font-weight: bold;
+  margin-top: 20px;
+  color: #333;
+  align-self: center;
+`;
+
+export const Card = styled.View`
+  flex-direction: row;
+  background-color: #fff;
+  margin-bottom: 15px;
+  border-radius: 10px;
+  overflow: hidden;
+  shadow-color: #000;
+  shadow-opacity: 0.1;
+  shadow-radius: 5px;
+  elevation: 3;
+`;
+
+export const ImageTh = styled.Image`
+  width: 150px;
+  height: 150px;
+  resize-mode: contain;
+`;
+
+export const DetailsContainer = styled.View`
+  flex: 1;
+  padding: 12px;
+  justify-content: center;
+`;
+
+export const TitleTh = styled.Text`
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: 5px;
+`;
+
+export const MetaTh = styled.Text`
+  font-size: 14px;
+  color: #666;
+  margin-top: 2px;
+  font-weight: 500;
+`;
+
+export const EmptyTextTh = styled.Text`
+  color: #888;
+  font-style: italic;
+  margin-bottom: 10px;
+  text-align: center;
+`;
+
+/* end of TripHistory screen designs */
+
 /* Trip creation screen designs */
-// Styled Container
 export const CreateScreenTripContainer = styled.ScrollView`
   flex: 1;
   padding: 20px;
@@ -615,6 +712,17 @@ export const BookTripButtonText = styled.Text`
 /* end of TripDetails screen designs */
 
 /* More component screen designs */
+export const ContactRowStyle = styled.View`
+  flex-direction: row;
+  align-items: center;
+  margin-bottom: 12px;
+`;
+
+export const ContactTextStyle = styled.Text`
+  color: #374151;
+  font-size: 14px;
+`;
+
 export const MoreContainer = styled.View`
   flex: 1;
   background-color: #fff;

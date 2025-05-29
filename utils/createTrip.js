@@ -12,17 +12,7 @@ export const createTrip = async (tripData, setMessage, setMessageType) => {
       setMessage,
       setMessageType
     );
-    // await uploadTripImageToServer(
-    //   tripData.vehicle_image,
-    //   "",
-    //   //route?.params?.email,
-    //   setMessage,
-    //   setMessageType,
-    //   setCorrectImageUrl
-    // );
-
     /* uploadTripImageToServer has corrected the image url with the correct */
-
     tripData.vehicle_image = correctImageUrl;
 
     const response = await axios.post(`${baseAPIUrl}/trips/create`, tripData);

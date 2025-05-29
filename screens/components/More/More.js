@@ -11,6 +11,8 @@ import {
 } from "react-native";
 import {
   ContactInfoContainer,
+  ContactRowStyle,
+  ContactTextStyle,
   MoreContainer,
 } from "../../../components/styles";
 
@@ -111,54 +113,39 @@ export default function More() {
             Customer Support
           </Text>
 
-          <View style={contactRowStyle}>
+          <ContactRowStyle>
             <Ionicons
               name="call-outline"
               size={20}
               color="#4b5563"
-              style={iconStyle}
+              style={{ marginRight: 10 }}
             />
-            <Text style={contactTextStyle}>{ownerMsisdn}</Text>
-          </View>
+            <ContactTextStyle>{ownerMsisdn}</ContactTextStyle>
+          </ContactRowStyle>
 
-          <View style={contactRowStyle}>
+          <ContactRowStyle>
             <Ionicons
               name="mail-outline"
               size={20}
               color="#4b5563"
-              style={iconStyle}
+              style={{ marginRight: 10 }}
             />
-            <Text style={contactTextStyle}>{ownerEmail}</Text>
-          </View>
+            <ContactTextStyle>{ownerEmail}</ContactTextStyle>
+          </ContactRowStyle>
 
-          <View style={contactRowStyle}>
+          <ContactRowStyle>
             <Ionicons
               name="globe-outline"
               size={20}
               color="#4b5563"
-              style={iconStyle}
+              style={{ marginRight: 10 }}
             />
-            <Text style={[contactTextStyle, { color: "#2563eb" }]}>
+            <ContactTextStyle style={{ color: "#2563eb" }}>
               {ownerWebsite}
-            </Text>
-          </View>
+            </ContactTextStyle>
+          </ContactRowStyle>
         </ContactInfoContainer>
       </MoreContainer>
     </ScrollView>
   );
 }
-
-const contactRowStyle = {
-  flexDirection: "row",
-  alignItems: "center",
-  marginBottom: 12,
-};
-
-const contactTextStyle = {
-  color: "#374151",
-  fontSize: 14,
-};
-
-const iconStyle = {
-  marginRight: 10,
-};

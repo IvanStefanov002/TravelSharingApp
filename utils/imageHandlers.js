@@ -162,8 +162,6 @@ export const changeImage = async (
         setVehicleInfo
       );
 
-      //setVehicleInfo((prev) => ({ ...prev, imageUrl: uploadedImageUrl }));
-
       vehicleInfo.imageUrl = uploadedImageUrl;
     } else {
       Alert.alert("You did not select any image.");
@@ -208,8 +206,6 @@ export const changeImageCar = async (
         setVehicleInfo
       );
 
-      //setVehicleInfo((prev) => ({ ...prev, imageUrl: uploadedImageUrl }));
-
       vehicleInfo.imageUrl = uploadedImageUrl;
     } else {
       Alert.alert("You did not select any image.");
@@ -245,7 +241,7 @@ export const deleteImage = async (
     if (response.data.statusText === "SUCCESS") {
       setVehicleInfo((prev) => ({
         ...prev,
-        imageUrl: "", // Clear the image from local state
+        imageUrl: "",
       }));
 
       handleMessage(

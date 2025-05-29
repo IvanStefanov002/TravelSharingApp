@@ -75,34 +75,35 @@ const Signup = ({ navigation }) => {
     const url = `${baseAPIUrl}/users/signup`;
 
     try {
-      // Make the POST request
+      /* Make the POST request */
       const response = await axios.post(url, credentials);
 
-      // Handle the response data
+      /* Handle the response data */
       const { statusText, message, data } = response.data;
 
-      // If the server's response status is not success, show the message
+      /* If the server's response status is not success, show the message */
       if (statusText !== "PENDING") {
         handleMessage(message, "FAILED");
       } else {
-        // Successful login, navigate to Welcome page
+        /* Successful login, navigate to Verification page */
         handleMessage("Login successful!", "SUCCESS");
-        navigation.navigate("Verification", { ...data }); // Send user data to Verification page
+        navigation.navigate("Verification", { ...data });
       }
     } catch (error) {
       if (error.response) {
-        // here will go after error from server
+        /* here will go after error from server */
         console.log("Response error:", error.response.data);
         console.log("Response status:", error.response.status);
       } else if (error.request) {
-        // The request was made but no response was received
+        /* The request was made but no response was received */
         console.log("No response received:", error.request);
       } else {
-        // Something happened in setting up the request that triggered an error
+        /* Something happened in setting up the request that triggered an error */
         console.log("Error message:", error.message);
       }
 
-      setSubmitting(false); // Ensure form submission is marked as complete
+      /* Ensure form submission is marked as complete */
+      setSubmitting(false);
 
       if (error.response.status !== 200) {
         handleMessage(error.response.data.message);
@@ -270,7 +271,6 @@ const Signup = ({ navigation }) => {
                   <ExtraText>Already have an account? </ExtraText>
                   <TextLink
                     onPress={() => {
-                      //navigation.navigate('Login');
                       resetLoginScreen(navigation);
                     }}
                   >
