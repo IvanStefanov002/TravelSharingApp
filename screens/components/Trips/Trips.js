@@ -12,6 +12,9 @@ import { createTrip } from "@/utils/createTrip";
 import { fetchVehicleInfo } from "@/utils/fetchVehicleInfo";
 import { pickImageTrip } from "@/utils/imageHandlers";
 
+/* JWT token storage */
+import AsyncStorage from "@react-native-async-storage/async-storage";
+
 import {
   ActivityIndicator,
   Button,
@@ -220,52 +223,124 @@ export default function Trips({ navigation }) {
     }
   };
 
+  // useFocusEffect(
+  //   useCallback(() => {
+  //     const fetchTripsWithDrivers = async () => {
+  //       try {
+  //         setIsLoading(true);
+
+  //         // 1. Fetch all trips
+  //         const tripResponse = await axios.get(`${baseAPIUrl}/trips/fetchData`);
+
+  //         /*
+  //          tezi zaqvki trqbva da mogat da se pravqt samo ot user-ri. Kato vlezne(login) user da se suzdade JWT
+  //          token koito da se izpolzva ot nego za dostup to rest api-to. da izpolzvam JWT v express.
+  //         */
+
+  //         /* for each trip params */
+  //         tripResponse.data = tripResponse.data.map((trip) => {
+  //           /* replace datetime */
+  //           if (trip.departure_datetime) {
+  //             trip.departure_datetime = trip.departure_datetime
+  //               .replace("T", " ")
+  //               .replace("Z", "");
+  //           }
+
+  //           /* replace image url */
+  //           if (trip.vehicle_image) {
+  //             trip.vehicle_image = trip.vehicle_image;
+  //           }
+
+  //           return trip;
+  //         });
+
+  //         const tripsData = tripResponse.data;
+
+  //         // 2. Fetch each driver by trip.driver_id
+  //         const driverFetches = tripsData.map((trip) =>
+  //           fetchUserDataById(trip.driver_id)
+  //         );
+  //         const driverDataList = await Promise.all(driverFetches);
+
+  //         // 3. Combine each trip with its driver
+  //         const enrichedTrips = tripsData.map((trip, index) => ({
+  //           ...trip,
+  //           driver: driverDataList[index],
+  //         }));
+
+  //         setTrips(enrichedTrips); // Now each trip has trip.driver
+  //       } catch (error) {
+  //         console.error("Error fetching trips or drivers:", error.message);
+  //       } finally {
+  //         setIsLoading(false);
+  //       }
+  //     };
+
+  //     /* Set tab if passed */
+  //     if (route.params?.activeTab) {
+  //       setActiveTab(route.params.activeTab);
+  //     }
+
+  //     /* reset filters */
+  //     setFilter({
+  //       origin: "",
+  //       destination: "",
+  //       maxPrice: "",
+  //       petsAllowed: "Any",
+  //       smokingAllowed: "Any",
+  //       availableSeats: "Any",
+  //       articleStatus: "Any",
+  //     });
+
+  //     fetchTripsWithDrivers();
+  //   }, [route.params?.activeTab])
+  // );
+
   useFocusEffect(
     useCallback(() => {
       const fetchTripsWithDrivers = async () => {
         try {
           setIsLoading(true);
 
-          // 1. Fetch all trips
-          const tripResponse = await axios.get(`${baseAPIUrl}/trips/fetchData`);
+          // Get JWT token from AsyncStorage
+          const token = await AsyncStorage.getItem("token");
 
-          /*
-           tezi zaqvki trqbva da mogat da se pravqt samo ot user-ri. Kato vlezne(login) user da se suzdade JWT
-           token koito da se izpolzva ot nego za dostup to rest api-to. da izpolzvam JWT v express.
-          */
+          // Include the token in the headers of the request
+          const tripResponse = await axios.get(
+            `${baseAPIUrl}/trips/fetchData`,
+            {
+              headers: {
+                Authorization: `Bearer ${token}`,
+              },
+            }
+          );
 
-          /* for each trip params */
+          // Process trips like you did before
           tripResponse.data = tripResponse.data.map((trip) => {
-            /* replace datetime */
             if (trip.departure_datetime) {
               trip.departure_datetime = trip.departure_datetime
                 .replace("T", " ")
                 .replace("Z", "");
             }
-
-            /* replace image url */
             if (trip.vehicle_image) {
               trip.vehicle_image = trip.vehicle_image;
             }
-
             return trip;
           });
 
           const tripsData = tripResponse.data;
 
-          // 2. Fetch each driver by trip.driver_id
           const driverFetches = tripsData.map((trip) =>
             fetchUserDataById(trip.driver_id)
           );
           const driverDataList = await Promise.all(driverFetches);
 
-          // 3. Combine each trip with its driver
           const enrichedTrips = tripsData.map((trip, index) => ({
             ...trip,
             driver: driverDataList[index],
           }));
 
-          setTrips(enrichedTrips); // Now each trip has trip.driver
+          setTrips(enrichedTrips);
         } catch (error) {
           console.error("Error fetching trips or drivers:", error.message);
         } finally {
@@ -273,12 +348,10 @@ export default function Trips({ navigation }) {
         }
       };
 
-      /* Set tab if passed */
       if (route.params?.activeTab) {
         setActiveTab(route.params.activeTab);
       }
 
-      /* reset filters */
       setFilter({
         origin: "",
         destination: "",

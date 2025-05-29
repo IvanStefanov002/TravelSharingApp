@@ -43,6 +43,9 @@ import KeyboardAvoidingWrapper from "./../components/KeyboardAvoidingWrapper";
 /* API client */
 import axios from "axios";
 
+/* JWT */
+import AsyncStorage from "@react-native-async-storage/async-storage";
+
 /* Google Auth */
 import * as AuthSession from "expo-auth-session";
 import * as Google from "expo-auth-session/providers/google";
@@ -117,6 +120,7 @@ const Login = ({ navigation, route }) => {
     }
   };
 
+  /*
   const handleLogin = async (credentials, setSubmitting) => {
     const url = `${baseAPIUrl}/users/login`;
 
@@ -129,7 +133,39 @@ const Login = ({ navigation, route }) => {
       } else {
         handleMessage("Login successful!", "SUCCESS");
 
-        /* navigate to home screen of the application */
+        // navigate to home screen of the application 
+        navigation.navigate("HomeTabs", { ...data[0] });
+      }
+    } catch (error) {
+      console.error("Login error:", error);
+      setSubmitting(false);
+
+      if (error.response?.status !== 200) {
+        handleMessage(error.response?.data?.message || "Login failed");
+      } else {
+        handleMessage("Network error. Please try again.", "FAILED");
+      }
+    } finally {
+      setSubmitting(false);
+    }
+  };
+  */
+  const handleLogin = async (credentials, setSubmitting) => {
+    const url = `${baseAPIUrl}/users/login`;
+
+    try {
+      const response = await axios.post(url, credentials);
+      const { statusText, message, token, data } = response.data;
+
+      if (statusText !== "SUCCESS") {
+        handleMessage(message, "FAILED");
+      } else {
+        handleMessage("Login successful!", "SUCCESS");
+
+        // 🔐 Save token to AsyncStorage
+        await AsyncStorage.setItem("token", token);
+
+        // 👇 Navigate to home screen
         navigation.navigate("HomeTabs", { ...data[0] });
       }
     } catch (error) {

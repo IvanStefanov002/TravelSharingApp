@@ -13,7 +13,6 @@ import { createNativeStackNavigator } from "@react-navigation/native-stack";
 
 /* screens */
 import AboutVehicle from "../screens/components/Profile/AboutVehicle";
-import Ratings from "../screens/components/Profile/Ratings";
 import Security from "../screens/components/Profile/Security";
 import TripHistory from "../screens/components/Profile/TripHistory";
 import Verification from "../screens/LinkVerification";
@@ -94,7 +93,6 @@ const RootStack = () => {
             }}
           />
 
-          <Stack.Screen name="Ratings" component={Ratings} />
           <Stack.Screen
             name="AboutVehicle"
             component={AboutVehicle}
