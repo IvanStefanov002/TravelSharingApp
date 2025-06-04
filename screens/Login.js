@@ -108,11 +108,7 @@ const Login = ({ navigation, route }) => {
       /* Save token in state for future logout */
       setAccessToken(token);
 
-      navigation.navigate("Welcome", {
-        name: user.name,
-        email: user.email,
-        photoUrl: user.picture,
-      });
+      //navigation.navigate("HomeTabs", { ...user });
     } catch (error) {
       handleMessage("Failed to get Google user info");
     } finally {
@@ -120,36 +116,6 @@ const Login = ({ navigation, route }) => {
     }
   };
 
-  /*
-  const handleLogin = async (credentials, setSubmitting) => {
-    const url = `${baseAPIUrl}/users/login`;
-
-    try {
-      const response = await axios.post(url, credentials);
-      const { statusText, message, data } = response.data;
-
-      if (statusText !== "SUCCESS") {
-        handleMessage(message, "FAILED");
-      } else {
-        handleMessage("Login successful!", "SUCCESS");
-
-        // navigate to home screen of the application 
-        navigation.navigate("HomeTabs", { ...data[0] });
-      }
-    } catch (error) {
-      console.error("Login error:", error);
-      setSubmitting(false);
-
-      if (error.response?.status !== 200) {
-        handleMessage(error.response?.data?.message || "Login failed");
-      } else {
-        handleMessage("Network error. Please try again.", "FAILED");
-      }
-    } finally {
-      setSubmitting(false);
-    }
-  };
-  */
   const handleLogin = async (credentials, setSubmitting) => {
     const url = `${baseAPIUrl}/users/login`;
 
@@ -162,10 +128,10 @@ const Login = ({ navigation, route }) => {
       } else {
         handleMessage("Login successful!", "SUCCESS");
 
-        // 🔐 Save token to AsyncStorage
+        /* Save token to AsyncStorage */
         await AsyncStorage.setItem("token", token);
 
-        // 👇 Navigate to home screen
+        /* Navigate to home screen */
         navigation.navigate("HomeTabs", { ...data[0] });
       }
     } catch (error) {

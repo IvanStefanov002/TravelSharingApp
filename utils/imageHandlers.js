@@ -226,9 +226,10 @@ export const changeImageCar = async (
 export const deleteImage = async (
   imageUrl,
   email,
+  plate,
   setMessage,
   setMessageType,
-  setVehicleInfo
+  onSuccess // renamed for clarity
 ) => {
   const imageFileName = imageUrl.split("/").pop();
 
@@ -236,13 +237,14 @@ export const deleteImage = async (
     const response = await axios.post(`${baseAPIUrl}/upload/delete/carImage`, {
       email,
       image: imageFileName,
+      plate,
     });
 
     if (response.data.statusText === "SUCCESS") {
-      setVehicleInfo((prev) => ({
-        ...prev,
-        imageUrl: "",
-      }));
+      const newUrl = "/uploads/no_image.jpeg";
+
+      // Use the callback to pass new image URL
+      onSuccess(newUrl);
 
       handleMessage(
         setMessage,

@@ -583,6 +583,25 @@ export const StyledInput = styled.TextInput`
   color: #111827;
 `;
 
+export const LabelRow = styled.View`
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+`;
+
+export const SuggestButton = styled.TouchableOpacity`
+  padding: 4px 8px;
+  background-color: #e5e7eb;
+  border-radius: 6px;
+`;
+
+export const SuggestButtonText = styled.Text`
+  font-size: 12px;
+  color: #2563eb;
+  font-weight: 500;
+`;
+
 // Button
 // export const TripsCTAButton = styled.TouchableOpacity`
 //   background-color: #6d28d9;
@@ -920,7 +939,7 @@ export const VehicleCard = styled.View`
   shadow-opacity: 0.1;
   shadow-radius: 5px;
   elevation: 3;
-  margin-top: 20px;
+  margin-top: 10px;
 `;
 
 export const VehicleImage = styled.Image`

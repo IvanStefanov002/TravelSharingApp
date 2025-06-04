@@ -22,6 +22,8 @@ import {
 } from "react-native";
 import {
   ContactInfoContainer,
+  ContactRowStyle,
+  Line,
   LocationContainer,
   LocationIcon,
   LocationText,
@@ -603,6 +605,7 @@ export default function TripDetails({ navigation }) {
           )}
         </View>
 
+        <Line style={{ marginBottom: 0 }}></Line>
         {/* Driver Information */}
         {driver && (
           <ContactInfoContainer style={{ marginTop: 32 }}>
@@ -616,49 +619,54 @@ export default function TripDetails({ navigation }) {
             >
               Driver Information
             </Text>
-            <View style={contactRowStyle}>
+            <ContactRowStyle>
               <Ionicons
                 name="person-outline"
                 size={20}
                 color="#4b5563"
-                style={iconStyle}
+                style={{ marginRight: 10 }}
               />
-              <Text style={contactTextStyle}>{driver.name}</Text>
-            </View>
+              <Text style={{ color: "#374151", fontSize: 14 }}>
+                {driver.name}
+              </Text>
+            </ContactRowStyle>
 
-            <View style={contactRowStyle}>
+            <ContactRowStyle>
               <Ionicons
                 name="mail-outline"
                 size={20}
                 color="#4b5563"
-                style={iconStyle}
+                style={{ marginRight: 10 }}
               />
-              <Text style={contactTextStyle}>{driver.credentials.email}</Text>
-            </View>
+              <Text style={{ color: "#374151", fontSize: 14 }}>
+                {driver.credentials.email}
+              </Text>
+            </ContactRowStyle>
 
-            <View style={contactRowStyle}>
+            <ContactRowStyle>
               <Ionicons
                 name="call-outline"
                 size={20}
                 color="#4b5563"
-                style={iconStyle}
+                style={{ marginRight: 10 }}
               />
-              <Text style={[contactTextStyle, { color: "#2563eb" }]}>
+              <Text style={{ fontSize: 14, color: "#2563eb" }}>
                 {driver.credentials.phone}
               </Text>
-            </View>
+            </ContactRowStyle>
 
-            <View style={contactRowStyle}>
+            <ContactRowStyle>
               <Ionicons
                 name="star-outline"
                 size={20}
                 color="#4b5563"
-                style={iconStyle}
+                style={{ marginRight: 10 }}
               />
-              <Text style={contactTextStyle}>
-                {driver.ratings.average} ( {driver.ratings.count} ratings )
+              <Text style={{ color: "#374151", fontSize: 14 }}>
+                {driver.ratings.average} / 5.00 ( {driver.ratings.count} ratings
+                )
               </Text>
-            </View>
+            </ContactRowStyle>
           </ContactInfoContainer>
         )}
 
@@ -670,21 +678,23 @@ export default function TripDetails({ navigation }) {
               justifyContent: "space-evenly",
             }}
           >
-            <TouchableOpacity
-              style={{
-                height: 50,
-                width: 150,
-                marginTop: 20,
-                backgroundColor: "#6d28d9",
-                padding: 15,
-                borderRadius: 10,
-              }}
-              onPress={() => setShowRatingModal(true)}
-            >
-              <Text style={{ color: "white", textAlign: "center" }}>
-                Rate Driver
-              </Text>
-            </TouchableOpacity>
+            {trip.taken_seats.includes(loggedUserId) && (
+              <TouchableOpacity
+                style={{
+                  height: 50,
+                  width: 150,
+                  marginTop: 20,
+                  backgroundColor: "#6d28d9",
+                  padding: 15,
+                  borderRadius: 10,
+                }}
+                onPress={() => setShowRatingModal(true)}
+              >
+                <Text style={{ color: "white", textAlign: "center" }}>
+                  Rate Driver
+                </Text>
+              </TouchableOpacity>
+            )}
 
             {trip.taken_seats.includes(loggedUserId) ? (
               <TouchableOpacity
@@ -958,8 +968,4 @@ export default function TripDetails({ navigation }) {
 const contactTextStyle = {
   color: "#374151",
   fontSize: 14,
-};
-
-const iconStyle = {
-  marginRight: 10,
 };

@@ -125,6 +125,12 @@ const HomeTabs = ({ route }) => {
                   Profile Settings
                 </Text>
               );
+              // } else if (route.name === "Trips") {
+              //   return (
+              //     <Text style={{ fontSize: 20, fontWeight: "600" }}>
+              //       Trips Conf
+              //     </Text>
+              //   );
             } else {
               return (
                 <CustomHeader
@@ -141,9 +147,7 @@ const HomeTabs = ({ route }) => {
           },
 
           headerTitleAlign:
-            route.name === "More" ||
-            route.name === "Profile" ||
-            route.name === "Trips"
+            route.name === "More" || route.name === "Profile"
               ? "center"
               : "left",
           headerStyle: styles.headerStyle /* to get rid of the header in iOS */,
@@ -174,7 +178,12 @@ const HomeTabs = ({ route }) => {
             email,
           }}
           options={({ route }) => ({
-            headerShown: route.params?.showHeader ?? false,
+            headerStyle: {
+              backgroundColor: "#facc15",
+              elevation: 0,
+              shadowOpacity: 0,
+              borderBottomWidth: 0,
+            },
           })}
         />
 

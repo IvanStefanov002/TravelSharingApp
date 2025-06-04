@@ -2,9 +2,9 @@ import { Ionicons } from "@expo/vector-icons";
 import { Picker } from "@react-native-picker/picker";
 import { useFocusEffect, useRoute } from "@react-navigation/native";
 import axios from "axios";
-import React, { useCallback, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 
-import { baseAPIUrl } from "@/components/shared";
+import { baseAPIUrl, GoogleAPIKey } from "@/components/shared";
 import { fetchUserDataById } from "@/utils/fetchUserDataById";
 import DateTimePicker from "@react-native-community/datetimepicker";
 
@@ -15,6 +15,11 @@ import { pickImageTrip } from "@/utils/imageHandlers";
 /* JWT token storage */
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
+/* google maps */
+import MapView, { Marker } from "react-native-maps";
+
+import ResponsiveImage from "./../../../components/ResponsiveImage";
+
 import {
   ActivityIndicator,
   Button,
@@ -23,13 +28,13 @@ import {
   Modal,
   StyleSheet,
   Text,
+  TextInput,
   TouchableOpacity,
   View,
 } from "react-native";
 
 import { handleMessage } from "@/utils/messages";
 import {
-  CardImage,
   CarInputColumn,
   CarInputContainer,
   CreateScreenTripContainer,
@@ -39,6 +44,7 @@ import {
   FiltersContainer,
   InputGroup,
   Label,
+  LabelRow,
   Line,
   LocationContainer,
   LocationText,
@@ -51,8 +57,11 @@ import {
   RadioContainer,
   RadioText,
   RedText,
+  SectionNote,
   StyledInput,
   StyledScrollView,
+  SuggestButton,
+  SuggestButtonText,
   TripCard,
   TripDriverNote,
   TripsContainer,
@@ -62,28 +71,51 @@ import {
 const screenWidth = Dimensions.get("window").width;
 
 export default function Trips({ navigation }) {
-  /* for trip creation */
-  const [imageName, setImageName] = useState("");
-  /* to here */
-
   /* activeTab param is passed by Home screen's buttons */
   const route = useRoute();
   const initialTab =
     route.params?.activeTab || "explore"; /* default if not passed */
   const userEmail = route.params?.email || "guest@tu-sofia.bg";
 
+  /* google maps integration */
+  const [selectingLocation, setSelectingLocation] = useState(null);
+  const [startLocationCoords, setStartLocationCoords] = useState(null);
+  const [endLocationCoords, setEndLocationCoords] = useState(null);
+  const [tripDistanceAndTime, setTripDistanceAndTime] = useState(null);
+
+  /* for trip creation */
+  const [imageName, setImageName] = useState("");
+  const [selectedCar, setSelectedCar] = useState(null);
+
   const [currentPage, setCurrentPage] = useState(1);
-  const tripsPerPage = 3;
 
   /* for choosing predefined vehicle */
   const [modalVisible, setModalVisible] = useState(false);
   const [vehicleInfo, setVehicleInfo] = useState(null);
   const [loading, setLoading] = useState(false);
 
+  const [aspectRatio, setAspectRatio] = useState(null);
+
   const [trips, setTrips] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [activeTab, setActiveTab] = useState(initialTab);
   const [showFilters, setShowFilters] = useState(true);
+
+  const [message, setMessage] = useState("DEFAULT");
+  const [messageType, setMessageType] = useState("FAILED");
+
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [showTimePicker, setShowTimePicker] = useState(false);
+
+  /* suggest price per seat calculation */
+  const [showSuggestModal, setShowSuggestModal] = useState(false);
+  const [fuelConsumption, setFuelConsumption] = useState("");
+  const [fuelPrice, setFuelPrice] = useState("");
+
+  const cardOptions = ["Bank", "Revolut"];
+  const cashOptions = ["BGN", "EUR"];
+  const tripsPerPage = 3;
+
   const [filter, setFilter] = useState({
     origin: "",
     destination: "",
@@ -103,10 +135,14 @@ export default function Trips({ navigation }) {
     start_location: {
       city: "",
       address: "",
+      // latitude: null,
+      // longitude: null,
     },
     end_location: {
       city: "",
       address: "",
+      // latitude: null,
+      // longitude: null,
     },
     departure_datetime: new Date(),
     is_pets_allowed: "",
@@ -124,188 +160,16 @@ export default function Trips({ navigation }) {
     },
   });
 
-  const cardOptions = ["Bank", "Revolut"];
-  const cashOptions = ["BGN", "EUR"];
-
-  const [message, setMessage] = useState("DEFAULT");
-  const [messageType, setMessageType] = useState("FAILED");
-
-  const [showDatePicker, setShowDatePicker] = useState(false);
-  const [showTimePicker, setShowTimePicker] = useState(false);
-
-  const onChange = (path, value) => {
-    const keys = path.split(".");
-
-    setTripData((prev) => {
-      if (keys.length === 1) {
-        return { ...prev, [keys[0]]: value };
-      } else if (keys.length === 2) {
-        return {
-          ...prev,
-          [keys[0]]: {
-            ...prev[keys[0]],
-            [keys[1]]: value,
-          },
-        };
-      }
-      return prev;
-    });
-  };
-
-  const onChangeCar = (key, value) => {
-    setTripData((prev) => ({
-      ...prev,
-      car: {
-        ...prev.car,
-        [key]: value,
-      },
-    }));
-  };
-
-  const resetTripFields = () => {
-    /* clear image */
-    setImageName("");
-
-    /* clear fields */
-    setTripData({
-      created_on: new Date(),
-      driver_id: "",
-      vehicle_image: "",
-      title: "",
-      trip_description: "",
-      start_location: {
-        city: "",
-        address: "",
-      },
-      end_location: {
-        city: "",
-        address: "",
-      },
-      departure_datetime: new Date(),
-      is_pets_allowed: "",
-      is_allowed_smoking: "",
-      price_per_seat: "",
-      available_seats: "",
-      checkout_options: [],
-      taken_seats: [],
-      car: {
-        make: "",
-        model: "",
-        year: "",
-        color: "",
-        plate: "",
-      },
-    });
-  };
-
-  const handleSubmitTrip = async () => {
-    /* set created on field */
-    tripData.created_on = new Date().toLocaleString([], {
-      hour: "2-digit",
-      minute: "2-digit",
-      hour12: false,
-      year: "numeric",
-      month: "2-digit",
-      day: "2-digit",
-    });
-
-    /* set driver_id */
-    tripData.driver_id = route?.params?.id;
-
-    console.log(`about to insert this trip:`, tripData);
-
-    /* send request to upload trip */
-    const success = await createTrip(tripData, setMessage, setMessageType);
-
-    if (success) {
-      resetTripFields();
-      navigation.navigate("Home");
-    }
-  };
-
-  // useFocusEffect(
-  //   useCallback(() => {
-  //     const fetchTripsWithDrivers = async () => {
-  //       try {
-  //         setIsLoading(true);
-
-  //         // 1. Fetch all trips
-  //         const tripResponse = await axios.get(`${baseAPIUrl}/trips/fetchData`);
-
-  //         /*
-  //          tezi zaqvki trqbva da mogat da se pravqt samo ot user-ri. Kato vlezne(login) user da se suzdade JWT
-  //          token koito da se izpolzva ot nego za dostup to rest api-to. da izpolzvam JWT v express.
-  //         */
-
-  //         /* for each trip params */
-  //         tripResponse.data = tripResponse.data.map((trip) => {
-  //           /* replace datetime */
-  //           if (trip.departure_datetime) {
-  //             trip.departure_datetime = trip.departure_datetime
-  //               .replace("T", " ")
-  //               .replace("Z", "");
-  //           }
-
-  //           /* replace image url */
-  //           if (trip.vehicle_image) {
-  //             trip.vehicle_image = trip.vehicle_image;
-  //           }
-
-  //           return trip;
-  //         });
-
-  //         const tripsData = tripResponse.data;
-
-  //         // 2. Fetch each driver by trip.driver_id
-  //         const driverFetches = tripsData.map((trip) =>
-  //           fetchUserDataById(trip.driver_id)
-  //         );
-  //         const driverDataList = await Promise.all(driverFetches);
-
-  //         // 3. Combine each trip with its driver
-  //         const enrichedTrips = tripsData.map((trip, index) => ({
-  //           ...trip,
-  //           driver: driverDataList[index],
-  //         }));
-
-  //         setTrips(enrichedTrips); // Now each trip has trip.driver
-  //       } catch (error) {
-  //         console.error("Error fetching trips or drivers:", error.message);
-  //       } finally {
-  //         setIsLoading(false);
-  //       }
-  //     };
-
-  //     /* Set tab if passed */
-  //     if (route.params?.activeTab) {
-  //       setActiveTab(route.params.activeTab);
-  //     }
-
-  //     /* reset filters */
-  //     setFilter({
-  //       origin: "",
-  //       destination: "",
-  //       maxPrice: "",
-  //       petsAllowed: "Any",
-  //       smokingAllowed: "Any",
-  //       availableSeats: "Any",
-  //       articleStatus: "Any",
-  //     });
-
-  //     fetchTripsWithDrivers();
-  //   }, [route.params?.activeTab])
-  // );
-
   useFocusEffect(
     useCallback(() => {
       const fetchTripsWithDrivers = async () => {
         try {
           setIsLoading(true);
 
-          // Get JWT token from AsyncStorage
+          /* Get JWT token from AsyncStorage */
           const token = await AsyncStorage.getItem("token");
 
-          // Include the token in the headers of the request
+          /* Include the token in the headers of the request */
           const tripResponse = await axios.get(
             `${baseAPIUrl}/trips/fetchData`,
             {
@@ -315,7 +179,7 @@ export default function Trips({ navigation }) {
             }
           );
 
-          // Process trips like you did before
+          /* Process trips */
           tripResponse.data = tripResponse.data.map((trip) => {
             if (trip.departure_datetime) {
               trip.departure_datetime = trip.departure_datetime
@@ -366,7 +230,257 @@ export default function Trips({ navigation }) {
     }, [route.params?.activeTab])
   );
 
-  const [selectedCar, setSelectedCar] = useState(null);
+  useEffect(() => {
+    const { start_location, end_location } = tripData;
+    if (start_location?.latitude && end_location?.latitude) {
+      // update distance/time or anything else
+      getDrivingDistanceAndTime(
+        start_location,
+        end_location,
+        GoogleAPIKey
+      ).then(setTripDistanceAndTime);
+    }
+  }, [tripData.start_location, tripData.end_location]);
+
+  const onChange = (path, value) => {
+    const keys = path.split(".");
+
+    setTripData((prev) => {
+      if (keys.length === 1) {
+        return { ...prev, [keys[0]]: value };
+      } else if (keys.length === 2) {
+        return {
+          ...prev,
+          [keys[0]]: {
+            ...prev[keys[0]],
+            [keys[1]]: value,
+          },
+        };
+      }
+      return prev;
+    });
+  };
+
+  const onChangeCar = (key, value) => {
+    setTripData((prev) => ({
+      ...prev,
+      car: {
+        ...prev.car,
+        [key]: value,
+      },
+    }));
+  };
+
+  const resetTripFields = () => {
+    /* reset fields for distance and time calculations */
+    setStartLocationCoords("");
+    setEndLocationCoords("");
+
+    setTripDistanceAndTime("");
+
+    /* fuel consuption for suggesting price */
+    setFuelConsumption("");
+    setFuelPrice("");
+
+    /* clear image */
+    setImageName("");
+
+    /* clear fields */
+    setTripData({
+      created_on: new Date(),
+      driver_id: "",
+      vehicle_image: "",
+      title: "",
+      trip_description: "",
+      start_location: {
+        city: "",
+        address: "",
+        // latitude: null,
+        // longitude: null,
+      },
+      end_location: {
+        city: "",
+        address: "",
+        // latitude: null,
+        // longitude: null,
+      },
+      departure_datetime: new Date(),
+      is_pets_allowed: "",
+      is_allowed_smoking: "",
+      price_per_seat: "",
+      available_seats: "",
+      checkout_options: [],
+      taken_seats: [],
+      car: {
+        make: "",
+        model: "",
+        year: "",
+        color: "",
+        plate: "",
+      },
+    });
+  };
+
+  const handleSubmitTrip = async () => {
+    /* set created on field */
+    tripData.created_on = new Date().toLocaleString([], {
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: false,
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+    });
+
+    /* set driver_id */
+    tripData.driver_id = route?.params?.id;
+
+    console.log(`about to insert this trip:`, tripData);
+
+    /* send request to upload trip */
+    const success = await createTrip(tripData, setMessage, setMessageType);
+
+    if (success) {
+      resetTripFields();
+      navigation.navigate("Home");
+    }
+  };
+
+  const getDrivingDistanceAndTime = async (startCoords, endCoords, apiKey) => {
+    const origin = `${startCoords.latitude},${startCoords.longitude}`;
+    const destination = `${endCoords.latitude},${endCoords.longitude}`;
+
+    /* url to fetch desired info from google's Distance Matrix API */
+    /* &departure_time=now = let's calculation of traffic */
+
+    const url = `https://maps.googleapis.com/maps/api/distancematrix/json?origins=${origin}&destinations=${destination}&key=${apiKey}&mode=driving&departure_time=now`;
+
+    /* The Google Maps Distance Matrix API does not allow you to specify a driving speed as a parameter directly. It uses real-world data such as:
+      Road types and speed limits
+      Traffic conditions (if enabled)
+      Typical vs live traffic (depending on the departure_time parameter)
+    */
+
+    try {
+      const response = await axios.get(url);
+      const data = response.data;
+
+      if (data.status === "OK" && data.rows[0].elements[0].status === "OK") {
+        const element = data.rows[0].elements[0];
+
+        return {
+          distanceText: element.distance.text,
+          durationText: element.duration_in_traffic
+            ? element.duration_in_traffic.text // e.g., "35 mins with traffic"
+            : element.duration.text, // fallback if no traffic data
+        };
+      } else {
+        throw new Error("No valid route found");
+      }
+    } catch (error) {
+      console.error("Error fetching distance:", error.message);
+      return null;
+    }
+  };
+
+  function parseAddressComponents(components) {
+    let city = "";
+    let neighborhood = "";
+    let street = "";
+    let streetNumber = "";
+
+    components.forEach((component) => {
+      const types = component.types;
+      if (types.includes("locality")) {
+        city = component.long_name;
+      } else if (
+        types.includes("sublocality_level_1") ||
+        types.includes("neighborhood")
+      ) {
+        neighborhood = component.long_name;
+      } else if (types.includes("route")) {
+        street = component.long_name;
+      } else if (types.includes("street_number")) {
+        streetNumber = component.long_name;
+      }
+    });
+
+    const addressParts = [];
+    if (neighborhood) addressParts.push(neighborhood);
+    if (street) addressParts.push(street);
+    if (streetNumber) addressParts.push(streetNumber);
+
+    const address = addressParts.join(", ");
+
+    return { city, address };
+  }
+
+  const fetchAddressFromCoords = async (latitude, longitude) => {
+    try {
+      const response = await fetch(
+        `https://maps.googleapis.com/maps/api/geocode/json?latlng=${latitude},${longitude}&key=${GoogleAPIKey}`
+      );
+      const data = await response.json();
+
+      if (data.status === "OK" && data.results.length > 0) {
+        const components = data.results[0].address_components;
+        return parseAddressComponents(components);
+      }
+      return { city: "", address: "" };
+    } catch (error) {
+      console.error("Geocoding error:", error);
+      return { city: "", address: "" };
+    }
+  };
+
+  const handleMapPress = async (event) => {
+    const coords = event.nativeEvent.coordinate;
+    const { city, address } = await fetchAddressFromCoords(
+      coords.latitude,
+      coords.longitude
+    );
+
+    let updatedStartCoords = startLocationCoords;
+    let updatedEndCoords = endLocationCoords;
+
+    if (selectingLocation === "start") {
+      setStartLocationCoords(coords);
+      setTripData((prev) => ({
+        ...prev,
+        start_location: {
+          ...prev.start_location,
+          latitude: coords.latitude,
+          longitude: coords.longitude,
+          city: city || prev.start_location.city,
+          address: address || prev.start_location.address,
+        },
+      }));
+    } else if (selectingLocation === "end") {
+      setEndLocationCoords(coords);
+      setTripData((prev) => ({
+        ...prev,
+        end_location: {
+          ...prev.end_location,
+          latitude: coords.latitude,
+          longitude: coords.longitude,
+          city: city || prev.end_location.city,
+          address: address || prev.end_location.address,
+        },
+      }));
+    }
+
+    if (startLocationCoords && endLocationCoords) {
+      const result = await getDrivingDistanceAndTime(
+        updatedStartCoords,
+        updatedEndCoords,
+        GoogleAPIKey
+      );
+
+      setTripDistanceAndTime(result);
+    }
+
+    setSelectingLocation(null);
+  };
 
   const handleFetchUserVehicle = async () => {
     if (!userEmail) {
@@ -396,6 +510,27 @@ export default function Trips({ navigation }) {
     if (value !== undefined) {
       setFilter({ ...filter, [fieldName]: value });
     }
+  };
+
+  const handleSuggestPriceCalculation = () => {
+    const distanceKm = parseFloat(
+      tripDistanceAndTime?.distanceText?.replace("km", "").trim()
+    ); // e.g., 120
+    const consumption = parseFloat(fuelConsumption); // e.g., 7.5
+    const fuelPriceNumber = parseFloat(fuelPrice);
+
+    if (!distanceKm || !consumption || !fuelPriceNumber) return;
+
+    const totalLiters = (consumption / 100) * distanceKm;
+    const totalFuelCost = totalLiters * fuelPriceNumber;
+
+    const suggestedPricePerSeat = (
+      totalFuelCost / (tripData.available_seats || 1)
+    ).toFixed(2);
+
+    onChange("price_per_seat", suggestedPricePerSeat);
+
+    setShowSuggestModal(false);
   };
 
   const filteredTrips = trips.filter((trip) => {
@@ -442,10 +577,6 @@ export default function Trips({ navigation }) {
     (val) => val !== "" && val !== "Any"
   );
 
-  const displayedTrips = isFilterApplied
-    ? filteredTrips
-    : filteredTrips.slice(0, 5);
-
   const paginatedTrips = isFilterApplied
     ? filteredTrips.slice(0, currentPage * tripsPerPage)
     : filteredTrips.slice(0, 5);
@@ -476,13 +607,34 @@ export default function Trips({ navigation }) {
     </InputGroup>
   );
 
+  // /* Dynamically calculate image aspect ratio */
+  // const calculateImageAspectRatio = (imageUrl) => {
+  //   if (imageUrl) {
+  //     setLoading(true);
+  //     Image.getSize(
+  //       `${baseAPIUrl}` + imageUrl,
+  //       (width, height) => {
+  //         setAspectRatio(width / height);
+  //         setLoading(false);
+  //       },
+  //       (error) => {
+  //         console.warn("Image load error:", error);
+  //         setAspectRatio(2); // fallback
+  //         setLoading(false);
+  //       }
+  //     );
+  //   }
+  // };
+
+  // console.log(`aspectRatio`, aspectRatio);
+
   return (
     <StyledScrollView>
       <View
         style={{
           flexDirection: "row",
           justifyContent: "center",
-          marginTop: 40,
+          marginTop: 10,
           marginBottom: 10,
         }}
       >
@@ -674,11 +826,11 @@ export default function Trips({ navigation }) {
                     Created on:{" "}
                     {trip.created_on ? trip.created_on : "not available"}
                   </Text>
-                  <CardImage
-                    style={{ backgroundColor: "lightgray" }}
-                    source={{ uri: `${baseAPIUrl}${trip.vehicle_image}` }}
-                    resizeMode="contain"
+                  <ResponsiveImage
+                    imageUrl={`${baseAPIUrl}${trip.vehicle_image}`}
+                    style={{ borderRadius: 8, marginBottom: 10 }}
                   />
+
                   <Text
                     style={{
                       fontWeight: 600,
@@ -802,10 +954,6 @@ export default function Trips({ navigation }) {
         </>
       ) : (
         <CreateScreenTripContainer>
-          {/* <Text style={{ fontSize: 20, fontWeight: "bold", marginBottom: 20 }}>
-            Create a New Trip
-          </Text> */}
-
           <Text
             style={{
               fontSize: 16,
@@ -1041,6 +1189,103 @@ export default function Trips({ navigation }) {
             />
           </InputGroup>
 
+          <Text style={{ fontWeight: 400, color: "green" }}>
+            Pick <Text style={{ color: "red", fontWeight: 600 }}>start</Text>{" "}
+            and <Text style={{ color: "red", fontWeight: 600 }}>end</Text>{" "}
+            location from Map:
+          </Text>
+
+          <View
+            style={{
+              flexDirection: "row",
+              justifyContent: "space-between",
+              gap: 1,
+              marginBottom: 10,
+            }}
+          >
+            <TripsCTAButton
+              onPress={() => setSelectingLocation("start")}
+              style={{ flex: 1, marginRight: 5, backgroundColor: "#6d28d9" }}
+            >
+              <Text
+                style={{
+                  color: "white",
+                  fontWeight: "bold",
+                  textAlign: "center",
+                }}
+              >
+                Select Start Location
+              </Text>
+            </TripsCTAButton>
+            <TripsCTAButton
+              onPress={() => setSelectingLocation("end")}
+              style={{ flex: 1, marginLeft: 5, backgroundColor: "#6d28d9" }}
+            >
+              <Text
+                style={{
+                  color: "white",
+                  fontWeight: "bold",
+                  textAlign: "center",
+                }}
+              >
+                Select End Location
+              </Text>
+            </TripsCTAButton>
+          </View>
+
+          {(selectingLocation === "start" || selectingLocation === "end") && (
+            <View style={{ height: 300, marginBottom: 60 }}>
+              <MapView
+                style={{ width: "100%", height: 300 }}
+                onPress={handleMapPress}
+                initialRegion={{
+                  latitude:
+                    (selectingLocation === "end"
+                      ? endLocationCoords.latitude
+                      : startLocationCoords.latitude) ||
+                    42.6977 /* default coordinates - София */,
+                  longitude:
+                    (selectingLocation === "end"
+                      ? endLocationCoords.longitude
+                      : startLocationCoords.longitude) ||
+                    23.3219 /* default coordinates - София */,
+                  latitudeDelta: 0.02,
+                  longitudeDelta: 0.05,
+                }}
+              >
+                <Marker
+                  coordinate={{
+                    latitude:
+                      (selectingLocation === "end"
+                        ? endLocationCoords.latitude
+                        : startLocationCoords.latitude) ||
+                      42.6977 /* default coordinates - София */,
+                    longitude:
+                      (selectingLocation === "end"
+                        ? endLocationCoords.longitude
+                        : startLocationCoords.longitude) ||
+                      23.3219 /* default coordinates - София */,
+                  }}
+                />
+              </MapView>
+
+              <TripsCTAButton
+                onPress={() => setSelectingLocation(null)}
+                style={{ marginTop: 10, backgroundColor: "#facc15" }}
+              >
+                <Text
+                  style={{
+                    color: "white",
+                    fontWeight: "bold",
+                    textAlign: "center",
+                  }}
+                >
+                  Hide Map
+                </Text>
+              </TripsCTAButton>
+            </View>
+          )}
+
           <InputGroup>
             <Label>From (City)</Label>
             <StyledInput
@@ -1150,8 +1395,11 @@ export default function Trips({ navigation }) {
           </InputGroup>
 
           <InputGroup>
-            <Label>Pets allowed</Label>
-            <View style={styles.radioContainer}>
+            <Label>
+              <Ionicons name="paw-outline" size={20} color="#6d28d9" /> Pets
+              allowed
+            </Label>
+            <RadioContainer>
               <RadioButton onPress={() => onChange("is_pets_allowed", "yes")}>
                 <RadioCircle
                   style={[
@@ -1167,11 +1415,14 @@ export default function Trips({ navigation }) {
                 />
                 <RadioText>No</RadioText>
               </RadioButton>
-            </View>
+            </RadioContainer>
           </InputGroup>
 
           <InputGroup>
-            <Label>Smoking allowed</Label>
+            <Label>
+              <Ionicons name="logo-no-smoking" size={20} color="#6d28d9" />{" "}
+              Smoking allowed
+            </Label>
             <RadioContainer>
               <RadioButton
                 onPress={() => onChange("is_allowed_smoking", "yes")}
@@ -1196,16 +1447,6 @@ export default function Trips({ navigation }) {
           </InputGroup>
 
           <InputGroup>
-            <Label>Price per Seat (BGN)</Label>
-            <StyledInput
-              placeholder="10"
-              keyboardType="numeric"
-              value={tripData.price_per_seat}
-              onChangeText={(text) => onChange("price_per_seat", text)}
-            />
-          </InputGroup>
-
-          <InputGroup>
             <Label>Available Seats</Label>
             <StyledInput
               placeholder="3"
@@ -1215,8 +1456,105 @@ export default function Trips({ navigation }) {
             />
           </InputGroup>
 
-          {renderOptions("Card Options", cardOptions, "card")}
-          {renderOptions("Cash Options", cashOptions, "cash")}
+          <InputGroup>
+            <LabelRow>
+              <Label>Price per Seat (BGN)</Label>
+              <SuggestButton
+                onPress={() => setShowSuggestModal(true)}
+                disabled={!tripData.available_seats || !tripDistanceAndTime}
+                style={{
+                  opacity:
+                    tripData.available_seats && tripDistanceAndTime.distanceText
+                      ? 1
+                      : 0.5 /* makes it look disabled */,
+                }}
+              >
+                <SuggestButtonText>Suggest Price</SuggestButtonText>
+              </SuggestButton>
+            </LabelRow>
+
+            <StyledInput
+              placeholder="10"
+              keyboardType="numeric"
+              value={tripData.price_per_seat}
+              onChangeText={(text) => onChange("price_per_seat", text)}
+            />
+          </InputGroup>
+
+          {renderOptions(
+            <View style={{ flexDirection: "row", alignItems: "center" }}>
+              <Ionicons name="card-outline" size={16} color="#6d28d9" />
+              <Text style={{ marginLeft: 6 }}>Card Options</Text>
+            </View>,
+            cardOptions,
+            "card"
+          )}
+
+          {renderOptions(
+            <View style={{ flexDirection: "row", alignItems: "center" }}>
+              <Ionicons name="cash-outline" size={16} color="#6d28d9" />
+              <Text style={{ marginLeft: 6 }}>Cash Options</Text>
+            </View>,
+            cashOptions,
+            "cash"
+          )}
+
+          <Line></Line>
+          <SectionNote style={{ marginBottom: 0 }}>
+            Note: Only available if you choosed location from Maps
+          </SectionNote>
+          <View
+            style={{
+              backgroundColor: "#f3f4f6",
+              padding: 16,
+              borderRadius: 12,
+              marginVertical: 16,
+              shadowColor: "#000",
+              shadowOffset: { width: 0, height: 2 },
+              shadowOpacity: 0.1,
+              shadowRadius: 4,
+              elevation: 3,
+            }}
+          >
+            <Text
+              style={{
+                fontSize: 16,
+                fontWeight: "600",
+                marginBottom: 8,
+                textAlign: "center",
+              }}
+            >
+              Estimated distance and duration based on Google Maps:
+            </Text>
+
+            <View
+              style={{
+                flexDirection: "row",
+                justifyContent: "space-between",
+                marginTop: 4,
+              }}
+            >
+              <View style={{ flex: 1 }}>
+                <Text style={{ fontSize: 14, color: "#6b7280" }}>Distance</Text>
+                <Text
+                  style={{ fontSize: 16, fontWeight: "500", color: "#111827" }}
+                >
+                  {tripDistanceAndTime?.distanceText || "--"}
+                </Text>
+              </View>
+
+              <View style={{ flex: 1 }}>
+                <Text style={{ fontSize: 14, color: "#6b7280" }}>
+                  Estimated Duration
+                </Text>
+                <Text
+                  style={{ fontSize: 16, fontWeight: "500", color: "#111827" }}
+                >
+                  {tripDistanceAndTime?.durationText || "--"}
+                </Text>
+              </View>
+            </View>
+          </View>
 
           <TripsCTAButton
             style={{ marginBottom: 90 }}
@@ -1226,6 +1564,47 @@ export default function Trips({ navigation }) {
               Submit Trip
             </Text>
           </TripsCTAButton>
+
+          <Modal
+            visible={showSuggestModal}
+            transparent
+            animationType="slide"
+            onRequestClose={() => setShowSuggestModal(false)}
+          >
+            <View style={modalOverlay}>
+              <View style={modalContainer}>
+                <Text style={modalTitle}>Fuel Consumption</Text>
+                <TextInput
+                  placeholder=" l/100km "
+                  keyboardType="numeric"
+                  value={fuelConsumption}
+                  onChangeText={setFuelConsumption}
+                  style={modalInput}
+                />
+                <TextInput
+                  placeholder="Fuel price (BGN/L)"
+                  keyboardType="numeric"
+                  value={fuelPrice}
+                  onChangeText={(text) => setFuelPrice(text)}
+                  style={modalInput}
+                />
+
+                <View
+                  style={{
+                    flexDirection: "row",
+                    justifyContent: "space-between",
+                  }}
+                >
+                  <TouchableOpacity onPress={() => setShowSuggestModal(false)}>
+                    <Text style={modalCancel}>Cancel</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity onPress={handleSuggestPriceCalculation}>
+                    <Text style={modalConfirm}>Calculate</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            </View>
+          </Modal>
         </CreateScreenTripContainer>
       )}
     </StyledScrollView>
@@ -1234,10 +1613,49 @@ export default function Trips({ navigation }) {
 
 const styles = StyleSheet.create({
   selected: {
-    backgroundColor: "#6d28d9",
+    backgroundColor: "#b2f2bb",
   },
   optionSelected: {
-    backgroundColor: "#6d28d9",
+    backgroundColor: "#b2f2bb",
     borderColor: "#6d28d9",
   },
 });
+
+const modalOverlay = {
+  flex: 1,
+  justifyContent: "center",
+  alignItems: "center",
+  backgroundColor: "rgba(0,0,0,0.5)",
+};
+
+const modalContainer = {
+  backgroundColor: "#fff",
+  padding: 20,
+  borderRadius: 10,
+  width: "80%",
+};
+
+const modalTitle = {
+  fontSize: 16,
+  marginBottom: 12,
+  fontWeight: "bold",
+};
+
+const modalInput = {
+  borderWidth: 1,
+  borderColor: "#ccc",
+  padding: 10,
+  borderRadius: 6,
+  marginBottom: 20,
+};
+
+const modalCancel = {
+  color: "#999",
+  fontSize: 16,
+};
+
+const modalConfirm = {
+  color: "#2563eb",
+  fontWeight: "bold",
+  fontSize: 16,
+};

@@ -21,3 +21,5 @@ export const aboutAppText =
 export const ownerMsisdn = "+359 89 240 0139";
 export const ownerEmail = "support@travelsharingapp.com";
 export const ownerWebsite = "www.travelsharingapp.com";
+
+export const GoogleAPIKey = "AIzaSyAIyR9SaxIbHvT_nBgcE2KeZY_0CwJXc8c";

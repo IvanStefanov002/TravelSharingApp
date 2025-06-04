@@ -136,19 +136,19 @@ export default function Home({ route, navigation }) {
         <CTAButtonsContainer>
           <CTAButton
             onPress={() =>
-              navigation.navigate("Trips", { activeTab: "create" })
+              navigation.navigate("Trips", { activeTab: "explore" })
             }
           >
-            <CTAButtonText>Plan a Ride</CTAButtonText>
+            <CTAButtonText>Find a Ride</CTAButtonText>
           </CTAButton>
           <CTAButton
             onPress={() =>
-              navigation.navigate("Trips", { activeTab: "explore" })
+              navigation.navigate("Trips", { activeTab: "create" })
             }
             style={{ backgroundColor: "#fde68a" }}
           >
             <CTAButtonText style={{ color: "black" }}>
-              Find a Ride
+              Plan a Ride
             </CTAButtonText>
           </CTAButton>
         </CTAButtonsContainer>

@@ -6,6 +6,7 @@ import { baseAPIUrl } from "../../../components/shared";
 
 import {
   Card,
+  DetailsContainer,
   EmptyTextTh,
   ImageTh,
   Line,
@@ -49,10 +50,6 @@ const TripHistory = ({ route }) => {
             }
 
             if (trip.vehicle_image) {
-              // trip.vehicle_image = trip.vehicle_image.replace(
-              //   "http://localhost:3000",
-              //   baseAPIUrl
-              // );
               trip.vehicle_image = trip.vehicle_image;
             }
 

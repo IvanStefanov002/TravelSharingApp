@@ -98,7 +98,10 @@ const RootStack = () => {
             component={AboutVehicle}
             options={{
               title: "Vehicle Information",
-              statusBarStyle: "light",
+              statusBarStyle: "auto",
+              headerStyle: {
+                backgroundColor: "#facc15",
+              },
               /* statusBarHidden: true, */
             }}
           />
