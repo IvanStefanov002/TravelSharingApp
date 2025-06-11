@@ -176,6 +176,7 @@ const HomeTabs = ({ route }) => {
           initialParams={{
             id,
             email,
+            roles,
           }}
           options={({ route }) => ({
             headerStyle: {

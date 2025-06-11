@@ -750,6 +750,7 @@ export const MoreContainer = styled.View`
 
 export const ContactInfoContainer = styled.View`
   margin-top: 20px;
+  margin-bottom: 80px;
   padding: 16px;
   background-color: #f9fafb;
   border-radius: 12px;

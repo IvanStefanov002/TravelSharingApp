@@ -51,6 +51,9 @@ import * as AuthSession from "expo-auth-session";
 import * as Google from "expo-auth-session/providers/google";
 import * as WebBrowser from "expo-web-browser";
 
+/* client ids */
+import { fetchClientIds } from "./../utils/fetchClientIds";
+
 const logoutFromGoogle = async (accessToken) => {
   try {
     await AuthSession.revokeAsync(
@@ -66,11 +69,30 @@ const logoutFromGoogle = async (accessToken) => {
 WebBrowser.maybeCompleteAuthSession();
 
 const Login = ({ navigation, route }) => {
+  /* google sign in credentials */
+  const [androidClientId, setAndroidClientId] = useState("");
+  const [iosClientId, setIosClientId] = useState("");
+  const [webClientId, setWebClientId] = useState("");
+
   const [hidePassword, setHidePassword] = useState(true);
   const [message, setMessage] = useState();
   const [messageType, setMessageType] = useState();
   const [googleSubmitting, setGoogleSubmitting] = useState(false);
   const [accessToken, setAccessToken] = useState(null);
+
+  /* UseEffect to fetch Google API key */
+  useEffect(() => {
+    const getClientIds = async () => {
+      const response = await fetchClientIds();
+      if (response) {
+        setAndroidClientId(response.android_client_id);
+        setIosClientId(response.ios_client_id);
+        setWebClientId(response.web_client_id);
+      }
+    };
+
+    getClientIds();
+  }, []);
 
   /*
   Rules for all authentication providers:
@@ -80,12 +102,9 @@ const Login = ({ navigation, route }) => {
   a manner that works just like it would in production.
   */
   const [request, response, promptAsync] = Google.useAuthRequest({
-    androidClientId:
-      "540257643829-pv04v06u33br20m2ap1an5m1knajv8ko.apps.googleusercontent.com",
-    iosClientId:
-      "540257643829-bn1enviibrse9pbrdl8i6qvg0c5ejv52.apps.googleusercontent.com",
-    webClientId:
-      "540257643829-rc1q8uvarhud1652bokmhbhfm8esd89k.apps.googleusercontent.com",
+    androidClientId: androidClientId,
+    iosClientId: iosClientId,
+    webClientId: webClientId,
     scopes: ["profile", "email"],
     prompt: "select_account",
   });

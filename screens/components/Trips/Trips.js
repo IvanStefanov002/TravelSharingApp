@@ -4,7 +4,7 @@ import { useFocusEffect, useRoute } from "@react-navigation/native";
 import axios from "axios";
 import React, { useCallback, useEffect, useState } from "react";
 
-import { baseAPIUrl, GoogleAPIKey } from "@/components/shared";
+import { baseAPIUrl } from "@/components/shared";
 import { fetchUserDataById } from "@/utils/fetchUserDataById";
 import DateTimePicker from "@react-native-community/datetimepicker";
 
@@ -17,11 +17,13 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 
 /* google maps */
 import MapView, { Marker } from "react-native-maps";
+import { fetchGoogleApiKey } from "./../../../utils/fetchGoogleApiKey";
 
 import ResponsiveImage from "./../../../components/ResponsiveImage";
 
 import {
   ActivityIndicator,
+  Alert,
   Button,
   Dimensions,
   FlatList,
@@ -78,6 +80,7 @@ export default function Trips({ navigation }) {
   const userEmail = route.params?.email || "guest@tu-sofia.bg";
 
   /* google maps integration */
+  const [googleApiKey, setGoogleApiKey] = useState("");
   const [selectingLocation, setSelectingLocation] = useState(null);
   const [startLocationCoords, setStartLocationCoords] = useState(null);
   const [endLocationCoords, setEndLocationCoords] = useState(null);
@@ -111,6 +114,8 @@ export default function Trips({ navigation }) {
   const [showSuggestModal, setShowSuggestModal] = useState(false);
   const [fuelConsumption, setFuelConsumption] = useState("");
   const [fuelPrice, setFuelPrice] = useState("");
+
+  const isDriver = route?.params?.roles?.includes("driver");
 
   const cardOptions = ["Bank", "Revolut"];
   const cashOptions = ["BGN", "EUR"];
@@ -230,6 +235,16 @@ export default function Trips({ navigation }) {
     }, [route.params?.activeTab])
   );
 
+  /* UseEffect to fetch Google API key */
+  useEffect(() => {
+    const getKey = async () => {
+      const key = await fetchGoogleApiKey();
+      if (key) setGoogleApiKey(key);
+    };
+
+    getKey();
+  }, []);
+
   useEffect(() => {
     const { start_location, end_location } = tripData;
     if (start_location?.latitude && end_location?.latitude) {
@@ -237,7 +252,7 @@ export default function Trips({ navigation }) {
       getDrivingDistanceAndTime(
         start_location,
         end_location,
-        GoogleAPIKey
+        googleApiKey
       ).then(setTripDistanceAndTime);
     }
   }, [tripData.start_location, tripData.end_location]);
@@ -418,7 +433,7 @@ export default function Trips({ navigation }) {
   const fetchAddressFromCoords = async (latitude, longitude) => {
     try {
       const response = await fetch(
-        `https://maps.googleapis.com/maps/api/geocode/json?latlng=${latitude},${longitude}&key=${GoogleAPIKey}`
+        `https://maps.googleapis.com/maps/api/geocode/json?latlng=${latitude},${longitude}&key=${googleApiKey}`
       );
       const data = await response.json();
 
@@ -473,7 +488,7 @@ export default function Trips({ navigation }) {
       const result = await getDrivingDistanceAndTime(
         updatedStartCoords,
         updatedEndCoords,
-        GoogleAPIKey
+        googleApiKey
       );
 
       setTripDistanceAndTime(result);
@@ -607,37 +622,18 @@ export default function Trips({ navigation }) {
     </InputGroup>
   );
 
-  // /* Dynamically calculate image aspect ratio */
-  // const calculateImageAspectRatio = (imageUrl) => {
-  //   if (imageUrl) {
-  //     setLoading(true);
-  //     Image.getSize(
-  //       `${baseAPIUrl}` + imageUrl,
-  //       (width, height) => {
-  //         setAspectRatio(width / height);
-  //         setLoading(false);
-  //       },
-  //       (error) => {
-  //         console.warn("Image load error:", error);
-  //         setAspectRatio(2); // fallback
-  //         setLoading(false);
-  //       }
-  //     );
-  //   }
-  // };
-
-  // console.log(`aspectRatio`, aspectRatio);
-
   return (
     <StyledScrollView>
       <View
         style={{
           flexDirection: "row",
           justifyContent: "center",
+          alignItems: "center",
           marginTop: 10,
           marginBottom: 10,
         }}
       >
+        {/* Explore Trips Button */}
         <TouchableOpacity
           onPress={() => setActiveTab("explore")}
           style={{
@@ -655,22 +651,44 @@ export default function Trips({ navigation }) {
           </Text>
         </TouchableOpacity>
 
+        {/* Create Trip Button */}
         <TouchableOpacity
           onPress={() => {
-            setActiveTab("create");
-            resetTripFields();
+            if (isDriver) {
+              setActiveTab("create");
+              resetTripFields();
+            }
           }}
+          disabled={!isDriver}
           style={{
             paddingVertical: 10,
             paddingHorizontal: 20,
             backgroundColor: activeTab === "create" ? "#6d28d9" : "#e5e7eb",
             borderTopRightRadius: 10,
             borderBottomRightRadius: 10,
+            opacity: isDriver ? 1 : 0.5,
           }}
         >
           <Text style={{ color: activeTab === "create" ? "white" : "#111827" }}>
             Create Trip
           </Text>
+        </TouchableOpacity>
+
+        {/* Info icon */}
+        <TouchableOpacity
+          onPress={() =>
+            Alert.alert(
+              "Информация за разделите",
+              "• 'Explore Trips' е разрешено за всички потребители на приложението.\n• 'Create Trip' е разрешено само за потребители, които имат роля 'шофьор'."
+            )
+          }
+          style={{ marginLeft: 10 }}
+        >
+          <Ionicons
+            name="information-circle-outline"
+            size={24}
+            color="#6d28d9"
+          />
         </TouchableOpacity>
       </View>
 

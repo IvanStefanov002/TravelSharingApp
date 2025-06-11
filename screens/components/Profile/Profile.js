@@ -8,6 +8,7 @@ import { resetLoginScreen } from "../../../utils/resetLoginScreen";
 import { baseAPIUrl } from "../../../components/shared";
 
 import { changeImage, pickImage } from "@/utils/imageHandlers";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import axios from "axios";
 import {
   AvatarProfile,
@@ -56,6 +57,7 @@ export default function Profile({ navigation, route }) {
   };
 
   const saveRoles = async () => {
+    const token = await AsyncStorage.getItem("token");
     const url = `${baseAPIUrl}/users/updateRoles`;
 
     try {
@@ -65,12 +67,33 @@ export default function Profile({ navigation, route }) {
       });
 
       if (response.data.statusText === "SUCCESS") {
-        Alert.alert("Success", "Your roles were updated!");
-        setUser((prevUser) => ({
-          ...prevUser,
+        const updatedUser = {
+          ...user,
           roles: selectedRoles,
-        }));
+        };
+
+        setUser(updatedUser);
         setIsEditingRoles(false);
+
+        const data = {
+          email: user.email,
+          id: user.id,
+          name: user.name,
+          profileImage: user.imageUrl,
+          roles: selectedRoles,
+        };
+
+        Alert.alert("Success", "Your roles were updated!", [
+          {
+            text: "OK",
+            onPress: () => {
+              navigation.reset({
+                index: 0,
+                routes: [{ name: "HomeTabs", params: data }],
+              });
+            },
+          },
+        ]);
       } else {
         Alert.alert("Failed to update roles");
       }

@@ -1,4 +1,5 @@
 import Constants from "expo-constants";
+//import { fetchGoogleApiKey } from "./../utils/fetchGoogleApiKey";
 
 const debuggerHost =
   Constants.manifest?.debuggerHost || Constants.expoConfig?.hostUri;
@@ -22,4 +23,4 @@ export const ownerMsisdn = "+359 89 240 0139";
 export const ownerEmail = "support@travelsharingapp.com";
 export const ownerWebsite = "www.travelsharingapp.com";
 
-export const GoogleAPIKey = "AIzaSyAIyR9SaxIbHvT_nBgcE2KeZY_0CwJXc8c";
+//export const GoogleAPIKey = fetchGoogleApiKey();

@@ -5,10 +5,9 @@ import { uploadTripImageToServer } from "./uploadImage";
 export const createTrip = async (tripData, setMessage, setMessageType) => {
   try {
     /* first upload the image to the server */
-
     const correctImageUrl = await uploadTripImageToServer(
       tripData.vehicle_image,
-      "", // Add other needed params
+      "",
       setMessage,
       setMessageType
     );
@@ -22,10 +21,6 @@ export const createTrip = async (tripData, setMessage, setMessageType) => {
       setMessageType("SUCCESS");
       return true;
     } else {
-      /* delete image */
-
-      //TODO:
-
       setMessage("Failed to create trip.");
       setMessageType("FAILED");
       return false;
