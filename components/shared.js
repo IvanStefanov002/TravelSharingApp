@@ -1,5 +1,4 @@
 import Constants from "expo-constants";
-//import { fetchGoogleApiKey } from "./../utils/fetchGoogleApiKey";
 
 const debuggerHost =
   Constants.manifest?.debuggerHost || Constants.expoConfig?.hostUri;
@@ -8,19 +7,17 @@ export const baseAPIUrl = `http://${ip}:3000`;
 
 /* More::Help&FAQ */
 export const helpFaqText =
-  "Q: How do I book a trip?\nA: Browse available trips in the “Explore Trips” tab and tap on a trip to view details and reserve a seat.\n\nQ: Can I cancel a trip?\nA: You can cancel a booking up to 24 hours before the departure time. Visit the “My Trips” section to manage your reservations.\n\nQ: Is it safe to share rides with others?\nA: All drivers and passengers are required to register and verify their identity. Please also check driver ratings before booking.\n\nQ: What if I have an issue during a trip?\nA: You can contact us directly via the “Contact Support” section at the bottom of the “More” tab.";
+  "В: Как да резервирам пътуване?\nО: Разгледайте наличните пътувания в раздел „Разгледай пътувания“ и натиснете върху пътуване, за да видите подробности и да резервирате място.\n\nВ: Мога ли да отменя пътуване?\nО: Можете да отмените резервация до 24 часа преди часа на тръгване. Посетете раздел „Моите пътувания“, за да управлявате резервациите си.\n\nВ: Безопасно ли е да споделям пътувания с други?\nО: Всички шофьори и пътници трябва да се регистрират и да потвърдят самоличността си. Моля, проверете и рейтингите на шофьорите преди резервация.\n\nВ: Какво да направя, ако имам проблем по време на пътуване?\nО: Можете да се свържете директно с нас чрез раздел „Свържи се с поддръжка“ в долната част на таба „Още“.";
 
 /* More::Privacy Policy */
 export const privacyPolicyText =
-  "Your privacy is important to us. We collect only the data necessary to provide and improve our ride-sharing service. This includes contact details, trip information, and app usage analytics.\n\n- We never sell or share your data with third parties without your consent.\n- You may request to delete your data at any time by contacting support.\n- All personal information is stored securely and encrypted.\n\nBy using the app, you agree to our privacy policy.";
+  "Вашата поверителност е важна за нас. Събираме само данни, необходими за предоставяне и подобряване на нашата услуга за споделено пътуване. Това включва контактни данни, информация за пътуванията и анализ на използването на приложението.\n\n- Никога не продаваме и не споделяме вашите данни с трети страни без вашето съгласие.\n- Можете да поискате изтриване на вашите данни по всяко време, като се свържете с поддръжката.\n- Всички лични данни се съхраняват сигурно и са криптирани.\n\nС използването на приложението се съгласявате с нашата политика за поверителност.";
 
 /* More::About the app */
 export const aboutAppText =
-  "TravelSharingApp is a community-powered ride-sharing platform that helps drivers and passengers connect for safer, more affordable travel across Bulgaria.\n\n- Built for commuters, students, and casual travelers\n- Focused on safety, affordability, and user experience\n- Developed with love and purpose to reduce travel costs and carbon footprint\n\nWe're constantly improving the app — thank you for being part of our journey!";
+  "TravelSharingApp е платформа за споделено пътуване, задвижвана от общността, която помага на шофьори и пътници да се свързват за по-безопасни и по-достъпни пътувания в България.\n\n- Създадена за пътуващи, студенти и случайни пътници\n- Фокусирана върху безопасността, достъпността и удобството за потребителя\n- Разработена с любов и цел за намаляване на разходите за пътуване и въглеродния отпечатък\n\nПостоянно подобряваме приложението — благодарим, че сте част от нашето пътешествие!";
 
 /* More::Customer support */
 export const ownerMsisdn = "+359 89 240 0139";
 export const ownerEmail = "support@travelsharingapp.com";
 export const ownerWebsite = "www.travelsharingapp.com";
-
-//export const GoogleAPIKey = fetchGoogleApiKey();

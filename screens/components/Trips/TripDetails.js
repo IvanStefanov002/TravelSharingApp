@@ -93,14 +93,14 @@ export default function TripDetails({ navigation }) {
     const result = await updateTripStatus(trip._id, "finished");
 
     if (result.success) {
-      Alert.alert("Success", result.message, [
+      Alert.alert("Успех", result.message, [
         {
           text: "OK",
           onPress: () => navigation.goBack(),
         },
       ]);
     } else {
-      Alert.alert("Error", result.message);
+      Alert.alert("Грешка", result.message);
     }
   };
 
@@ -108,20 +108,20 @@ export default function TripDetails({ navigation }) {
     const result = await updateTripStatus(trip._id, "on going");
 
     if (result.success) {
-      Alert.alert("Success", result.message, [
+      Alert.alert("Успех", result.message, [
         {
           text: "OK",
           onPress: () => navigation.goBack(),
         },
       ]);
     } else {
-      Alert.alert("Error", result.message);
+      Alert.alert("Грепка", result.message);
     }
   };
 
   const section = {
     id: "payment-methods",
-    title: "Payment methods",
+    title: "Методи на плащане",
   };
 
   const paymentOptions = trip.checkout_options || {};
@@ -187,7 +187,7 @@ export default function TripDetails({ navigation }) {
             taken_seats: [...prevTrip.taken_seats, userId],
           }));
 
-          Alert.alert("Success", "You booked this trip!", [
+          Alert.alert("Успешно", "Успешно запази това пътуване!", [
             {
               text: "OK",
               onPress: () => navigation.goBack(),
@@ -202,7 +202,7 @@ export default function TripDetails({ navigation }) {
         }
       } catch (error) {
         console.error("Error updating trip:", error.message);
-        Alert.alert("Cancel", "You could not cancel booking of this trip!", [
+        Alert.alert("Грешка", "Не успя да се отпишеш от това пътуване!", [
           {
             text: "OK",
             onPress: () => navigation.goBack(),
@@ -219,49 +219,46 @@ export default function TripDetails({ navigation }) {
 
   const outrollFromATrip = async (userId, tripId) => {
     /* check if booking is possible */
-    if (trip.available_seats !== 0) {
-      /* there are available seats - book a seat */
-      const payload = { tripId, userId };
+    //if (trip.available_seats !== 0) {
+    /* there are available seats - book a seat */
+    const payload = { tripId, userId };
 
-      try {
-        const response = await axios.post(
-          `${baseAPIUrl}/trips/unbook`,
-          payload
+    try {
+      const response = await axios.post(`${baseAPIUrl}/trips/unbook`, payload);
+
+      if (response.status === 200 || response.status === 201) {
+        console.log(
+          `User with id ${userId} canceled booking from trip with id ${tripId}`
         );
 
-        if (response.status === 200 || response.status === 201) {
-          console.log(
-            `User with id ${userId} canceled booking from trip with id ${tripId}`
-          );
+        setTrip((prevTrip) => ({
+          ...prevTrip,
+          available_seats: prevTrip.available_seats + 1,
+          taken_seats: prevTrip.taken_seats.filter((id) => id !== userId),
+        }));
 
-          setTrip((prevTrip) => ({
-            ...prevTrip,
-            available_seats: prevTrip.available_seats + 1,
-            taken_seats: prevTrip.taken_seats.filter((id) => id !== userId),
-          }));
-
-          Alert.alert("Success", "You canceled booking of this trip!", [
-            {
-              text: "OK",
-              onPress: () => navigation.goBack(),
-            },
-          ]);
-        }
-      } catch (error) {
-        console.error("Error updating trip:", error.message);
-        Alert.alert("Fail", "You could not cancel booking of this trip!", [
+        Alert.alert("Успех", "Успешно се отказа от това пътуване!", [
           {
             text: "OK",
             onPress: () => navigation.goBack(),
           },
         ]);
-
-        return {
-          success: false,
-          message: "Failed to update trip passengers. Please try again later.",
-        };
       }
+    } catch (error) {
+      console.error("Error updating trip:", error.message);
+      Alert.alert("Fail", "You could not cancel booking of this trip!", [
+        {
+          text: "OK",
+          onPress: () => navigation.goBack(),
+        },
+      ]);
+
+      return {
+        success: false,
+        message: "Failed to update trip passengers. Please try again later.",
+      };
     }
+    //}
   };
 
   /* Make sure trip and driver exist before rendering. */
@@ -328,7 +325,7 @@ export default function TripDetails({ navigation }) {
               <PriceIcon name="cash-outline" size={20} />
               <PriceText>
                 <RedText>{`${trip.price_per_seat} BGN`}</RedText>
-                {" per seat"}
+                {" за място"}
               </PriceText>
             </PriceContainer>
           </PriceContainer>
@@ -345,7 +342,7 @@ export default function TripDetails({ navigation }) {
                 fontWeight: 600,
               }}
             >
-              Description:
+              Описание:
             </Text>
           </TripAvailableSeats>
         </TripContainer>
@@ -373,7 +370,7 @@ export default function TripDetails({ navigation }) {
               fontWeight: 600,
             }}
           >
-            Available Seats: {trip.available_seats}
+            Свободни места: {trip.available_seats}
           </TripAvailableSeats>
         </TripContainer>
 
@@ -403,7 +400,7 @@ export default function TripDetails({ navigation }) {
             }}
           >
             <Text style={{ fontWeight: 600, fontSize: 16 }}>
-              Taken Seats: {trip.taken_seats?.length || 0}
+              Заети места: {trip.taken_seats?.length || 0}
             </Text>
             <Ionicons
               name={
@@ -483,13 +480,13 @@ export default function TripDetails({ navigation }) {
                 }}
               >
                 <Text style={{ fontWeight: "bold" }}>
-                  Name: {passengerInfo[expandedPassenger]?.name}
+                  Имена: {passengerInfo[expandedPassenger]?.name}
                 </Text>
                 <Text>
-                  Email: {passengerInfo[expandedPassenger]?.credentials.email}
+                  Имейл: {passengerInfo[expandedPassenger]?.credentials.email}
                 </Text>
                 <Text>
-                  Phone: {passengerInfo[expandedPassenger]?.credentials.phone}
+                  Телефон: {passengerInfo[expandedPassenger]?.credentials.phone}
                 </Text>
               </View>
             )}
@@ -569,7 +566,7 @@ export default function TripDetails({ navigation }) {
                     style={{ marginRight: 8 }}
                   />
                   <Text style={{ color: "#374151", fontSize: 14 }}>
-                    Not available
+                    Не е възможно
                   </Text>
                 </View>
               )}
@@ -608,7 +605,7 @@ export default function TripDetails({ navigation }) {
         <Line style={{ marginBottom: 0 }}></Line>
         {/* Driver Information */}
         {driver && (
-          <ContactInfoContainer style={{ marginTop: 32 }}>
+          <ContactInfoContainer style={{ marginTop: 32, marginBottom: 0 }}>
             <Text
               style={{
                 fontSize: 16,
@@ -617,7 +614,7 @@ export default function TripDetails({ navigation }) {
                 marginBottom: 16,
               }}
             >
-              Driver Information
+              Информация за шофьора
             </Text>
             <ContactRowStyle>
               <Ionicons
@@ -663,8 +660,8 @@ export default function TripDetails({ navigation }) {
                 style={{ marginRight: 10 }}
               />
               <Text style={{ color: "#374151", fontSize: 14 }}>
-                {driver.ratings.average} / 5.00 ( {driver.ratings.count} ratings
-                )
+                {driver.ratings.average} / 5.00 ( {driver.ratings.count}{" "}
+                рейтинга )
               </Text>
             </ContactRowStyle>
           </ContactInfoContainer>
@@ -691,7 +688,7 @@ export default function TripDetails({ navigation }) {
                 onPress={() => setShowRatingModal(true)}
               >
                 <Text style={{ color: "white", textAlign: "center" }}>
-                  Rate Driver
+                  Оцени шофьора
                 </Text>
               </TouchableOpacity>
             )}
@@ -709,25 +706,27 @@ export default function TripDetails({ navigation }) {
                 onPress={() => outrollFromATrip(loggedUserId, trip._id)}
               >
                 <Text style={{ color: "white", textAlign: "center" }}>
-                  Cancel booking
+                  Откажи се
                 </Text>
               </TouchableOpacity>
             ) : (
-              <TouchableOpacity
-                style={{
-                  height: 50,
-                  width: 150,
-                  marginTop: 20,
-                  backgroundColor: "#facc15",
-                  padding: 15,
-                  borderRadius: 10,
-                }}
-                onPress={() => enrollInATrip(loggedUserId, trip._id)}
-              >
-                <Text style={{ color: "white", textAlign: "center" }}>
-                  Book This Trip
-                </Text>
-              </TouchableOpacity>
+              trip.article_status === "available" && (
+                <TouchableOpacity
+                  style={{
+                    height: 50,
+                    width: 150,
+                    marginTop: 20,
+                    backgroundColor: "#facc15",
+                    padding: 15,
+                    borderRadius: 10,
+                  }}
+                  onPress={() => enrollInATrip(loggedUserId, trip._id)}
+                >
+                  <Text style={{ color: "white", textAlign: "center" }}>
+                    Резервирай
+                  </Text>
+                </TouchableOpacity>
+              )
             )}
           </View>
         ) : loggedUserId === trip.driver_id &&
@@ -753,7 +752,7 @@ export default function TripDetails({ navigation }) {
                 onPress={handleOnGoingTrip}
               >
                 <Text style={{ color: "white", textAlign: "center" }}>
-                  Start journey
+                  Започни
                 </Text>
               </TouchableOpacity>
             )}
@@ -768,9 +767,7 @@ export default function TripDetails({ navigation }) {
               }}
               onPress={handleFinishTrip}
             >
-              <Text style={{ color: "white", textAlign: "center" }}>
-                Archive Article
-              </Text>
+              <Text style={{ color: " ", textAlign: "center" }}>Приключи</Text>
             </TouchableOpacity>
           </View>
         ) : null}
@@ -798,10 +795,10 @@ export default function TripDetails({ navigation }) {
               }}
             >
               <Text style={{ fontSize: 18, marginBottom: 10 }}>
-                Add Passenger by ID or Email
+                Добавяне на пътник
               </Text>
               <TextInput
-                placeholder="Names"
+                placeholder="Имена"
                 value={manualPassengerNames}
                 onChangeText={setManualPassengerNames}
                 style={{
@@ -813,7 +810,7 @@ export default function TripDetails({ navigation }) {
                 }}
               />
               <TextInput
-                placeholder="Email"
+                placeholder="Имейл"
                 value={manualPassengerEmail}
                 onChangeText={setManualPassengerEmail}
                 style={{
@@ -825,7 +822,7 @@ export default function TripDetails({ navigation }) {
                 }}
               />
               <TextInput
-                placeholder="Phone"
+                placeholder="Телефон"
                 value={manualPassengerPhone}
                 onChangeText={setManualPassengerPhone}
                 style={{
@@ -852,14 +849,14 @@ export default function TripDetails({ navigation }) {
                     manualPassengerPhone
                   );
                   if (result.success) {
-                    Alert.alert("Success", result.message, [
+                    Alert.alert("Успех", result.message, [
                       {
                         text: "OK",
                         onPress: () => navigation.goBack(),
                       },
                     ]);
                   } else {
-                    Alert.alert("Error", result.message, [
+                    Alert.alert("Грешка", result.message, [
                       {
                         text: "OK",
                         onPress: () => navigation.goBack(),
@@ -869,7 +866,9 @@ export default function TripDetails({ navigation }) {
                   setShowAddPassengerModal(false);
                 }}
               >
-                <Text style={{ color: "white", textAlign: "center" }}>Add</Text>
+                <Text style={{ color: "white", textAlign: "center" }}>
+                  Добави
+                </Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -899,7 +898,7 @@ export default function TripDetails({ navigation }) {
               }}
             >
               <Text style={{ fontSize: 18, marginBottom: 10 }}>
-                Rate the Driver
+                Оцени шофьора
               </Text>
               <View style={{ flexDirection: "row", marginBottom: 20 }}>
                 {[1, 2, 3, 4, 5].map((num) => (
@@ -955,7 +954,7 @@ export default function TripDetails({ navigation }) {
                   setShowRatingModal(false);
                 }}
               >
-                <Text style={{ color: "white" }}>Submit</Text>
+                <Text style={{ color: "white" }}>Запази</Text>
               </TouchableOpacity>
             </View>
           </View>

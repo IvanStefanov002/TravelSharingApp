@@ -5,7 +5,6 @@ import {
   Platform,
   ScrollView,
   TouchableWithoutFeedback,
-  View,
 } from "react-native";
 
 import { Colors } from "./../components/styles";
@@ -16,13 +15,12 @@ const KeyboardAvoidingWrapper = ({ children }) => {
     <KeyboardAvoidingView
       style={{ flex: 1, backgroundColor: primary }}
       behavior={Platform.OS === "ios" ? "padding" : "height"}
+      keyboardVerticalOffset={Platform.OS === "ios" ? 60 : 0} // Добавено за по-добър offset
     >
       <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-        <View style={{ flex: 1 }}>
-          <ScrollView contentContainerStyle={{ flexGrow: 1 }}>
-            {children}
-          </ScrollView>
-        </View>
+        <ScrollView contentContainerStyle={{ flexGrow: 1 }}>
+          {children}
+        </ScrollView>
       </TouchableWithoutFeedback>
     </KeyboardAvoidingView>
   );

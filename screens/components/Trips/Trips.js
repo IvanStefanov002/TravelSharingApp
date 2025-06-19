@@ -9,7 +9,7 @@ import { fetchUserDataById } from "@/utils/fetchUserDataById";
 import DateTimePicker from "@react-native-community/datetimepicker";
 
 import { createTrip } from "@/utils/createTrip";
-import { fetchVehicleInfo } from "@/utils/fetchVehicleInfo";
+import { fetchVehicleInfoByPlate } from "@/utils/fetchVehicleInfoByPlate";
 import { pickImageTrip } from "@/utils/imageHandlers";
 
 /* JWT token storage */
@@ -35,6 +35,7 @@ import {
   View,
 } from "react-native";
 
+import { fetchVehicleInfo } from "@/utils/fetchVehicleInfo";
 import { handleMessage } from "@/utils/messages";
 import {
   CarInputColumn,
@@ -338,14 +339,17 @@ export default function Trips({ navigation }) {
 
   const handleSubmitTrip = async () => {
     /* set created on field */
-    tripData.created_on = new Date().toLocaleString([], {
-      hour: "2-digit",
-      minute: "2-digit",
-      hour12: false,
-      year: "numeric",
-      month: "2-digit",
-      day: "2-digit",
-    });
+    // tripData.created_on = new Date().toLocaleString([], {
+    //   hour: "2-digit",
+    //   minute: "2-digit",
+    //   hour12: false,
+    //   year: "numeric",
+    //   month: "2-digit",
+    //   day: "2-digit",
+    // });
+
+    tripData.created_on =
+      new Date().toISOString(); /* ISO format is best for sorting and storage */
 
     /* set driver_id */
     tripData.driver_id = route?.params?.id;
@@ -357,7 +361,7 @@ export default function Trips({ navigation }) {
 
     if (success) {
       resetTripFields();
-      navigation.navigate("Home");
+      navigation.navigate("Начало");
     }
   };
 
@@ -497,7 +501,7 @@ export default function Trips({ navigation }) {
     setSelectingLocation(null);
   };
 
-  const handleFetchUserVehicle = async () => {
+  const handleFetchUserVehicle = async (plate) => {
     if (!userEmail) {
       handleMessage("User email is missing", "FAILED");
       return;
@@ -505,13 +509,25 @@ export default function Trips({ navigation }) {
 
     setLoading(true);
     5;
-    await fetchVehicleInfo(
-      userEmail,
-      setVehicleInfo,
-      setMessage,
-      setMessageType,
-      handleMessage
-    );
+
+    if (!plate) {
+      await fetchVehicleInfo(
+        userEmail,
+        setVehicleInfo,
+        setMessage,
+        setMessageType,
+        handleMessage
+      );
+    } else {
+      await fetchVehicleInfoByPlate(
+        userEmail,
+        plate,
+        setVehicleInfo,
+        setMessage,
+        setMessageType,
+        handleMessage
+      );
+    }
 
     setLoading(false);
   };
@@ -592,9 +608,13 @@ export default function Trips({ navigation }) {
     (val) => val !== "" && val !== "Any"
   );
 
+  const sortedTrips = [...filteredTrips].sort((a, b) => {
+    return new Date(b.created_on || 0) - new Date(a.created_on || 0);
+  });
+
   const paginatedTrips = isFilterApplied
-    ? filteredTrips.slice(0, currentPage * tripsPerPage)
-    : filteredTrips.slice(0, 5);
+    ? sortedTrips.slice(0, currentPage * tripsPerPage)
+    : sortedTrips.slice(0, 5);
 
   const renderOptions = (label, options, path) => (
     <InputGroup>
@@ -647,7 +667,7 @@ export default function Trips({ navigation }) {
           <Text
             style={{ color: activeTab === "explore" ? "white" : "#111827" }}
           >
-            Explore Trips
+            Намери пътуване
           </Text>
         </TouchableOpacity>
 
@@ -670,7 +690,7 @@ export default function Trips({ navigation }) {
           }}
         >
           <Text style={{ color: activeTab === "create" ? "white" : "#111827" }}>
-            Create Trip
+            Създай пътуване
           </Text>
         </TouchableOpacity>
 
@@ -679,7 +699,7 @@ export default function Trips({ navigation }) {
           onPress={() =>
             Alert.alert(
               "Информация за разделите",
-              "• 'Explore Trips' е разрешено за всички потребители на приложението.\n• 'Create Trip' е разрешено само за потребители, които имат роля 'шофьор'."
+              "• 'Намери пътуване' е разрешено за всички потребители на приложението.\n• 'Създвай пътуване' е разрешено само за потребители, които имат роля 'шофьор'."
             )
           }
           style={{ marginLeft: 10 }}
@@ -704,16 +724,16 @@ export default function Trips({ navigation }) {
             onPress={() => setShowFilters(!showFilters)}
           >
             <Text style={{ color: "#6d28d9", fontWeight: "bold" }}>
-              {showFilters ? "Hide Filters ▲" : "Show Filters ▼"}
+              {showFilters ? "Скрий филтри ▲" : "Покажи филтри ▼"}
             </Text>
           </TouchableOpacity>
 
           {showFilters && (
             <FiltersContainer>
               <Filter>
-                <FilterLabel>Origin</FilterLabel>
+                <FilterLabel>Начална точка</FilterLabel>
                 <FilterInput
-                  placeholder="Enter city"
+                  placeholder="Въведи град"
                   value={filter.origin}
                   onChangeText={(text) =>
                     setFilter({ ...filter, origin: text })
@@ -722,9 +742,9 @@ export default function Trips({ navigation }) {
               </Filter>
 
               <Filter>
-                <FilterLabel>Destination</FilterLabel>
+                <FilterLabel>Крайна точка</FilterLabel>
                 <FilterInput
-                  placeholder="Enter city"
+                  placeholder="Въведи град"
                   value={filter.destination}
                   onChangeText={(text) =>
                     setFilter({ ...filter, destination: text })
@@ -733,9 +753,9 @@ export default function Trips({ navigation }) {
               </Filter>
 
               <Filter>
-                <FilterLabel>Max Price</FilterLabel>
+                <FilterLabel>Максимална цена</FilterLabel>
                 <FilterInput
-                  placeholder="Enter max price"
+                  placeholder="Въведи цена"
                   keyboardType="numeric"
                   value={filter.maxPrice}
                   onChangeText={(text) =>
@@ -745,7 +765,7 @@ export default function Trips({ navigation }) {
               </Filter>
 
               <Filter>
-                <FilterLabel>Pets Allowed</FilterLabel>
+                <FilterLabel>Домашни любимци</FilterLabel>
                 <Picker
                   selectedValue={filter.petsAllowed}
                   onValueChange={(value) =>
@@ -759,7 +779,7 @@ export default function Trips({ navigation }) {
               </Filter>
 
               <Filter>
-                <FilterLabel>Smoking Allowed</FilterLabel>
+                <FilterLabel>Разрешено пушене</FilterLabel>
                 <Picker
                   selectedValue={filter.smokingAllowed}
                   onValueChange={(value) =>
@@ -773,7 +793,7 @@ export default function Trips({ navigation }) {
               </Filter>
 
               <Filter>
-                <FilterLabel>Available Seats</FilterLabel>
+                <FilterLabel>Свободни места</FilterLabel>
                 <Picker
                   selectedValue={filter.availableSeats}
                   onValueChange={(value) =>
@@ -788,7 +808,7 @@ export default function Trips({ navigation }) {
               </Filter>
 
               <Filter>
-                <FilterLabel>Status</FilterLabel>
+                <FilterLabel>Статус</FilterLabel>
                 <Picker
                   selectedValue={filter.articleStatus}
                   onValueChange={(value) =>
@@ -806,8 +826,8 @@ export default function Trips({ navigation }) {
           <Line></Line>
           {!isFilterApplied && (
             <TripDriverNote>
-              Note: Currently are displayed trips without status filter. You can
-              apply additional filters from above.
+              Забележка: В момента се показват пътувания без филтър по статус.
+              Можете да приложите допълнителни филтри отгоре.
             </TripDriverNote>
           )}
 
@@ -824,7 +844,7 @@ export default function Trips({ navigation }) {
             {isLoading ? (
               <ActivityIndicator size="large" color="#6d28d9" />
             ) : filteredTrips.length === 0 ? (
-              <NoTripsText>No trips available</NoTripsText>
+              <NoTripsText>Няма налични пътувания</NoTripsText>
             ) : (
               paginatedTrips.map((trip) => (
                 <TripCard key={trip._id}>
@@ -841,8 +861,17 @@ export default function Trips({ navigation }) {
                       zIndex: 10,
                     }}
                   >
-                    Created on:{" "}
-                    {trip.created_on ? trip.created_on : "not available"}
+                    Създадено на:{" "}
+                    {trip.created_on
+                      ? new Date(trip.created_on).toLocaleString([], {
+                          hour: "2-digit",
+                          minute: "2-digit",
+                          hour12: false,
+                          year: "numeric",
+                          month: "2-digit",
+                          day: "2-digit",
+                        })
+                      : "not available"}
                   </Text>
                   <ResponsiveImage
                     imageUrl={`${baseAPIUrl}${trip.vehicle_image}`}
@@ -858,7 +887,7 @@ export default function Trips({ navigation }) {
                       marginBottom: 5,
                     }}
                   >
-                    Article overview:
+                    Преглед на статията:
                   </Text>
 
                   <LocationContainer>
@@ -916,7 +945,7 @@ export default function Trips({ navigation }) {
                     <Ionicons name="cash-outline" size={16} color="#6d28d9" />
                     <LocationText>
                       <RedText>{`${trip.price_per_seat} BGN`}</RedText>
-                      {" per seat"}
+                      {" за място"}
                     </LocationText>
                   </LocationContainer>
                   <TripsCTAButton
@@ -934,7 +963,7 @@ export default function Trips({ navigation }) {
                         fontSize: 16,
                       }}
                     >
-                      View Trip
+                      Преглед на пътуване
                     </Text>
                   </TripsCTAButton>
                 </TripCard>
@@ -953,7 +982,7 @@ export default function Trips({ navigation }) {
               {currentPage > 1 && (
                 <TouchableOpacity onPress={() => setCurrentPage(1)}>
                   <Text style={{ color: "#6d28d9", fontWeight: "bold" }}>
-                    Hide Shown Trips ▲
+                    Скрий показаните ▲
                   </Text>
                 </TouchableOpacity>
               )}
@@ -963,7 +992,7 @@ export default function Trips({ navigation }) {
                   onPress={() => setCurrentPage((prev) => prev + 1)}
                 >
                   <Text style={{ color: "#6d28d9", fontWeight: "bold" }}>
-                    Load More Trips ▼
+                    Зареди още ▼
                   </Text>
                 </TouchableOpacity>
               )}
@@ -980,7 +1009,7 @@ export default function Trips({ navigation }) {
               alignSelf: "center",
             }}
           >
-            Describe your vehicle's details:
+            Опишете вашето превозно средство:
           </Text>
           <Line style={{ marginBottom: 20, marginTop: 0 }}></Line>
 
@@ -992,7 +1021,7 @@ export default function Trips({ navigation }) {
               marginBottom: 10,
             }}
           >
-            <Text>Already got vehicle? Pick it up!</Text>
+            <Text>Имате превозно средство?</Text>
             <TripsCTAButton
               style={{
                 marginLeft: 20,
@@ -1002,7 +1031,7 @@ export default function Trips({ navigation }) {
               }}
               onPress={handleOpenModal}
             >
-              <Text style={{ color: "black", fontWeight: "bold" }}>Pick</Text>
+              <Text style={{ color: "black", fontWeight: "bold" }}>Избери</Text>
             </TripsCTAButton>
           </View>
 
@@ -1032,7 +1061,7 @@ export default function Trips({ navigation }) {
                 <Text
                   style={{ fontSize: 18, fontWeight: "bold", marginBottom: 20 }}
                 >
-                  Select Your Car
+                  Избери превозно средство
                 </Text>
 
                 {vehicleInfo?.length > 0 ? (
@@ -1053,7 +1082,8 @@ export default function Trips({ navigation }) {
                           setModalVisible(false);
 
                           /* set params of the fields */
-                          tripData.vehicle_image = item.image_url;
+                          tripData.vehicle_image = item.imageUrl;
+                          setImageName(item.imageUrl);
                           onChangeCar("make", item.make);
                           onChangeCar("model", item.model);
                           onChangeCar("year", item.year.toString());
@@ -1064,17 +1094,17 @@ export default function Trips({ navigation }) {
                         <Text style={{ fontWeight: "bold" }}>
                           {`${item.make} ${item.model} (${item.year})`}
                         </Text>
-                        <Text>Plate: {item.plate}</Text>
+                        <Text>Рег. номер: {item.plate}</Text>
                       </TouchableOpacity>
                     )}
                   />
                 ) : (
-                  <Text>No cars found for your account.</Text>
+                  <Text>Няма намерени превозни средства.</Text>
                 )}
 
                 <View style={{ height: 10 }} />
                 <Button
-                  title="Cancel"
+                  title="Отказ"
                   color="red"
                   onPress={() => setModalVisible(false)}
                 />
@@ -1107,7 +1137,7 @@ export default function Trips({ navigation }) {
               }}
             >
               <Text style={{ color: "#000", fontWeight: "bold" }}>
-                Add Image
+                Добави снимка
               </Text>
             </TouchableOpacity>
             <Text
@@ -1123,30 +1153,30 @@ export default function Trips({ navigation }) {
                 borderRadius: 5,
               }}
             >
-              {imageName || "No image selected"}
+              {imageName || "Не е избрана снимка"}
             </Text>
           </View>
           <CarInputContainer>
             <CarInputColumn>
-              <Label>Car Make</Label>
+              <Label>Марка</Label>
               <StyledInput
-                placeholder="Toyota"
+                placeholder="Тойота"
                 value={tripData.car.make}
                 onChangeText={(text) => onChangeCar("make", text)}
               />
             </CarInputColumn>
 
             <CarInputColumn>
-              <Label>Car Model</Label>
+              <Label>Модел</Label>
               <StyledInput
-                placeholder="Corolla"
+                placeholder="Корола"
                 value={tripData.car.model}
                 onChangeText={(text) => onChangeCar("model", text)}
               />
             </CarInputColumn>
 
             <CarInputColumn>
-              <Label>Car Year</Label>
+              <Label>Година</Label>
               <StyledInput
                 placeholder="2015"
                 keyboardType="numeric"
@@ -1156,16 +1186,16 @@ export default function Trips({ navigation }) {
             </CarInputColumn>
 
             <CarInputColumn>
-              <Label>Car Color</Label>
+              <Label>Цвят</Label>
               <StyledInput
-                placeholder="Red"
+                placeholder="червен"
                 value={tripData.car.color}
                 onChangeText={(text) => onChangeCar("color", text)}
               />
             </CarInputColumn>
 
             <CarInputColumn>
-              <Label>License Plate</Label>
+              <Label>Рег. номер</Label>
               <StyledInput
                 placeholder="CA1234AB"
                 value={tripData.car.plate}
@@ -1183,23 +1213,23 @@ export default function Trips({ navigation }) {
               alignSelf: "center",
             }}
           >
-            Describe your journey's details:
+            Опишете вашето пътуване:
           </Text>
           <Line style={{ marginBottom: 20, marginTop: 0 }}></Line>
 
           <InputGroup>
-            <Label>Trip Title</Label>
+            <Label>Заглавие</Label>
             <StyledInput
-              placeholder="Weekend to Plovdiv"
+              placeholder="Пътуване до Пловдив"
               value={tripData.title}
               onChangeText={(text) => onChange("title", text)}
             />
           </InputGroup>
 
           <InputGroup>
-            <Label>Description</Label>
+            <Label>Описание</Label>
             <StyledInput
-              placeholder="Short description..."
+              placeholder="кратко описание..."
               multiline
               numberOfLines={3}
               value={tripData.trip_description}
@@ -1208,9 +1238,10 @@ export default function Trips({ navigation }) {
           </InputGroup>
 
           <Text style={{ fontWeight: 400, color: "green" }}>
-            Pick <Text style={{ color: "red", fontWeight: 600 }}>start</Text>{" "}
-            and <Text style={{ color: "red", fontWeight: 600 }}>end</Text>{" "}
-            location from Map:
+            Избери{" "}
+            <Text style={{ color: "red", fontWeight: 600 }}>начална</Text> и{" "}
+            <Text style={{ color: "red", fontWeight: 600 }}>крайна</Text> точка
+            от картата:
           </Text>
 
           <View
@@ -1232,7 +1263,7 @@ export default function Trips({ navigation }) {
                   textAlign: "center",
                 }}
               >
-                Select Start Location
+                Избери начална точка
               </Text>
             </TripsCTAButton>
             <TripsCTAButton
@@ -1246,7 +1277,7 @@ export default function Trips({ navigation }) {
                   textAlign: "center",
                 }}
               >
-                Select End Location
+                Избери крайна точка
               </Text>
             </TripsCTAButton>
           </View>
@@ -1298,48 +1329,48 @@ export default function Trips({ navigation }) {
                     textAlign: "center",
                   }}
                 >
-                  Hide Map
+                  Скрий картата
                 </Text>
               </TripsCTAButton>
             </View>
           )}
 
           <InputGroup>
-            <Label>From (City)</Label>
+            <Label>Начална точка (град)</Label>
             <StyledInput
-              placeholder="Sofia"
+              placeholder="София"
               value={tripData.start_location.city}
               onChangeText={(text) => onChange("start_location.city", text)}
             />
           </InputGroup>
           <InputGroup>
-            <Label>From (Address)</Label>
+            <Label>Начална точка (адрес)</Label>
             <StyledInput
-              placeholder="ul. Hristo Botev 24"
+              placeholder="ул. Христо Ботев 24"
               value={tripData.start_location.address}
               onChangeText={(text) => onChange("start_location.address", text)}
             />
           </InputGroup>
 
           <InputGroup>
-            <Label>To (City)</Label>
+            <Label>Крайна точка (град)</Label>
             <StyledInput
-              placeholder="Varna"
+              placeholder="Варна"
               value={tripData.end_location.city}
               onChangeText={(text) => onChange("end_location.city", text)}
             />
           </InputGroup>
           <InputGroup>
-            <Label>To (Address)</Label>
+            <Label>Крайна точка (адрес)</Label>
             <StyledInput
-              placeholder="ul. Hristo Botev 24"
+              placeholder="ул. Христо Ботев 24"
               value={tripData.end_location.address}
               onChangeText={(text) => onChange("end_location.address", text)}
             />
           </InputGroup>
 
           <InputGroup>
-            <Label>Date & Time</Label>
+            <Label>Дата & час</Label>
             <TouchableOpacity
               onPress={() => setShowDatePicker(true)}
               style={{
@@ -1414,8 +1445,8 @@ export default function Trips({ navigation }) {
 
           <InputGroup>
             <Label>
-              <Ionicons name="paw-outline" size={20} color="#6d28d9" /> Pets
-              allowed
+              <Ionicons name="paw-outline" size={20} color="#6d28d9" />{" "}
+              Позволени домашни любимци
             </Label>
             <RadioContainer>
               <RadioButton onPress={() => onChange("is_pets_allowed", "yes")}>
@@ -1424,14 +1455,14 @@ export default function Trips({ navigation }) {
                     tripData.is_pets_allowed === "yes" && styles.selected,
                   ]}
                 />
-                <RadioText>Yes</RadioText>
+                <RadioText>Да</RadioText>
               </RadioButton>
 
               <RadioButton onPress={() => onChange("is_pets_allowed", "no")}>
                 <RadioCircle
                   style={[tripData.is_pets_allowed === "no" && styles.selected]}
                 />
-                <RadioText>No</RadioText>
+                <RadioText>Не</RadioText>
               </RadioButton>
             </RadioContainer>
           </InputGroup>
@@ -1439,7 +1470,7 @@ export default function Trips({ navigation }) {
           <InputGroup>
             <Label>
               <Ionicons name="logo-no-smoking" size={20} color="#6d28d9" />{" "}
-              Smoking allowed
+              Позволено пушенето
             </Label>
             <RadioContainer>
               <RadioButton
@@ -1450,7 +1481,7 @@ export default function Trips({ navigation }) {
                     tripData.is_allowed_smoking === "yes" && styles.selected,
                   ]}
                 />
-                <RadioText>Yes</RadioText>
+                <RadioText>Да</RadioText>
               </RadioButton>
 
               <RadioButton onPress={() => onChange("is_allowed_smoking", "no")}>
@@ -1459,13 +1490,13 @@ export default function Trips({ navigation }) {
                     tripData.is_allowed_smoking === "no" && styles.selected,
                   ]}
                 />
-                <RadioText>No</RadioText>
+                <RadioText>Не</RadioText>
               </RadioButton>
             </RadioContainer>
           </InputGroup>
 
           <InputGroup>
-            <Label>Available Seats</Label>
+            <Label>Свободни места</Label>
             <StyledInput
               placeholder="3"
               keyboardType="numeric"
@@ -1476,7 +1507,7 @@ export default function Trips({ navigation }) {
 
           <InputGroup>
             <LabelRow>
-              <Label>Price per Seat (BGN)</Label>
+              <Label>Цена за място (BGN)</Label>
               <SuggestButton
                 onPress={() => setShowSuggestModal(true)}
                 disabled={!tripData.available_seats || !tripDistanceAndTime}
@@ -1487,7 +1518,7 @@ export default function Trips({ navigation }) {
                       : 0.5 /* makes it look disabled */,
                 }}
               >
-                <SuggestButtonText>Suggest Price</SuggestButtonText>
+                <SuggestButtonText>Предложи цена</SuggestButtonText>
               </SuggestButton>
             </LabelRow>
 
@@ -1502,7 +1533,7 @@ export default function Trips({ navigation }) {
           {renderOptions(
             <View style={{ flexDirection: "row", alignItems: "center" }}>
               <Ionicons name="card-outline" size={16} color="#6d28d9" />
-              <Text style={{ marginLeft: 6 }}>Card Options</Text>
+              <Text style={{ marginLeft: 6 }}>Опции с карта</Text>
             </View>,
             cardOptions,
             "card"
@@ -1511,7 +1542,7 @@ export default function Trips({ navigation }) {
           {renderOptions(
             <View style={{ flexDirection: "row", alignItems: "center" }}>
               <Ionicons name="cash-outline" size={16} color="#6d28d9" />
-              <Text style={{ marginLeft: 6 }}>Cash Options</Text>
+              <Text style={{ marginLeft: 6 }}>Опции в брой</Text>
             </View>,
             cashOptions,
             "cash"
@@ -1519,7 +1550,7 @@ export default function Trips({ navigation }) {
 
           <Line></Line>
           <SectionNote style={{ marginBottom: 0 }}>
-            Note: Only available if you choosed location from Maps
+            Забележка: Налична само ако сте избрали локация от картата
           </SectionNote>
           <View
             style={{
@@ -1542,7 +1573,7 @@ export default function Trips({ navigation }) {
                 textAlign: "center",
               }}
             >
-              Estimated distance and duration based on Google Maps:
+              Пресметнато разстояние и продължителност, базирани на Google Maps:
             </Text>
 
             <View
@@ -1553,7 +1584,9 @@ export default function Trips({ navigation }) {
               }}
             >
               <View style={{ flex: 1 }}>
-                <Text style={{ fontSize: 14, color: "#6b7280" }}>Distance</Text>
+                <Text style={{ fontSize: 14, color: "#6b7280" }}>
+                  Разстояние
+                </Text>
                 <Text
                   style={{ fontSize: 16, fontWeight: "500", color: "#111827" }}
                 >
@@ -1563,7 +1596,7 @@ export default function Trips({ navigation }) {
 
               <View style={{ flex: 1 }}>
                 <Text style={{ fontSize: 14, color: "#6b7280" }}>
-                  Estimated Duration
+                  Продължителност
                 </Text>
                 <Text
                   style={{ fontSize: 16, fontWeight: "500", color: "#111827" }}
@@ -1579,7 +1612,7 @@ export default function Trips({ navigation }) {
             onPress={handleSubmitTrip}
           >
             <Text style={{ color: "#fff", fontWeight: "bold" }}>
-              Submit Trip
+              Публикувай пътуване
             </Text>
           </TripsCTAButton>
 
@@ -1614,10 +1647,10 @@ export default function Trips({ navigation }) {
                   }}
                 >
                   <TouchableOpacity onPress={() => setShowSuggestModal(false)}>
-                    <Text style={modalCancel}>Cancel</Text>
+                    <Text style={modalCancel}>Отказ</Text>
                   </TouchableOpacity>
                   <TouchableOpacity onPress={handleSuggestPriceCalculation}>
-                    <Text style={modalConfirm}>Calculate</Text>
+                    <Text style={modalConfirm}>Калкулирай</Text>
                   </TouchableOpacity>
                 </View>
               </View>

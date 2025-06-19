@@ -14,7 +14,7 @@ export const updateTripStatus = async (id, status) => {
     if (response.status === 200 || response.status === 201) {
       return {
         success: true,
-        message: "Trip status updated successfully.",
+        message: "Успешно обновен статус на пътуването.",
         data: response.data,
       };
     }
@@ -22,7 +22,7 @@ export const updateTripStatus = async (id, status) => {
     console.error("Error updating trip:", error.message);
     return {
       success: false,
-      message: "Failed to update trip status. Please try again later.",
+      message: "Грешка при обновяването на статуса на пътуването.",
     };
   }
 

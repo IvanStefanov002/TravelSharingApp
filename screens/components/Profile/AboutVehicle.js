@@ -150,7 +150,7 @@ const AboutVehicle = ({ route, navigation }) => {
           </Text>
 
           <TextInput
-            placeholder="Make"
+            placeholder="Марка"
             value={manualVehicle.make}
             onChangeText={(text) =>
               setManualVehicle((prev) => ({ ...prev, make: text }))
@@ -158,7 +158,7 @@ const AboutVehicle = ({ route, navigation }) => {
             style={inputStyle}
           />
           <TextInput
-            placeholder="Model"
+            placeholder="Модел"
             value={manualVehicle.model}
             onChangeText={(text) =>
               setManualVehicle((prev) => ({ ...prev, model: text }))
@@ -166,7 +166,7 @@ const AboutVehicle = ({ route, navigation }) => {
             style={inputStyle}
           />
           <TextInput
-            placeholder="Year"
+            placeholder="Година"
             value={manualVehicle.year}
             onChangeText={(text) =>
               setManualVehicle((prev) => ({ ...prev, year: text }))
@@ -174,7 +174,7 @@ const AboutVehicle = ({ route, navigation }) => {
             style={inputStyle}
           />
           <TextInput
-            placeholder="Color"
+            placeholder="Цвят"
             value={manualVehicle.color}
             onChangeText={(text) =>
               setManualVehicle((prev) => ({ ...prev, color: text }))
@@ -182,7 +182,7 @@ const AboutVehicle = ({ route, navigation }) => {
             style={inputStyle}
           />
           <TextInput
-            placeholder="Plate"
+            placeholder="Рег. номер"
             value={manualVehicle.plate}
             onChangeText={(text) =>
               setManualVehicle((prev) => ({ ...prev, plate: text }))
@@ -272,7 +272,11 @@ const AboutVehicle = ({ route, navigation }) => {
             }}
             style={{ height: 60, width: "100%" }}
           >
-            <Picker.Item label="Select vehicle..." value="" color="#888" />
+            <Picker.Item
+              label="Избери превозно средство..."
+              value=""
+              color="#888"
+            />
             {vehicleInfo.map((vehicle) => (
               <Picker.Item
                 key={vehicle.plate}
@@ -506,7 +510,7 @@ const AboutVehicle = ({ route, navigation }) => {
         ) : (
           <VehicleCard style={{ borderStyle: "solid", borderWidth: 0.1 }}>
             <VehicleRow>
-              <VehicleLabel>No vehicle selected.</VehicleLabel>
+              <VehicleLabel>Не е избрано превозно средство.</VehicleLabel>
             </VehicleRow>
           </VehicleCard>
         )}

@@ -42,28 +42,30 @@ const TripHistory = ({ route }) => {
             `${baseAPIUrl}/trips/fetchData/${userId}`
           );
 
-          const trips = response.data.map((trip) => {
-            if (trip.departure_datetime) {
-              trip.departure_datetime = trip.departure_datetime
-                .replace("T", " ")
-                .replace("Z", "");
-            }
+          if (response) {
+            const trips = response.data.map((trip) => {
+              if (trip.departure_datetime) {
+                trip.departure_datetime = trip.departure_datetime
+                  .replace("T", " ")
+                  .replace("Z", "");
+              }
 
-            if (trip.vehicle_image) {
-              trip.vehicle_image = trip.vehicle_image;
-            }
+              if (trip.vehicle_image) {
+                trip.vehicle_image = trip.vehicle_image;
+              }
 
-            return trip;
-          });
+              return trip;
+            });
 
-          // Categorize trips
-          const hosted = trips.filter((trip) => trip.driver_id === userId);
-          const joined = trips.filter((trip) =>
-            trip.taken_seats?.includes(userId)
-          );
+            // Categorize trips
+            const hosted = trips.filter((trip) => trip.driver_id === userId);
+            const joined = trips.filter((trip) =>
+              trip.taken_seats?.includes(userId)
+            );
 
-          setHostedTrips(hosted);
-          setJoinedTrips(joined);
+            setHostedTrips(hosted);
+            setJoinedTrips(joined);
+          }
         } catch (error) {
           console.error("Error fetching trips:", error.message);
           setMessage("Error loading trips.");
@@ -85,7 +87,7 @@ const TripHistory = ({ route }) => {
           {isDriver && (
             <>
               {/* Hosted Trips */}
-              <SectionTitleTH>Trips you've hosted</SectionTitleTH>
+              <SectionTitleTH>Пътувания, създадени от мен</SectionTitleTH>
               <Line></Line>
               {hostedTrips.length > 0 ? (
                 hostedTrips.map((trip) => (
@@ -96,21 +98,21 @@ const TripHistory = ({ route }) => {
                     <DetailsContainer>
                       <TitleTh>{trip.title}</TitleTh>
                       <MetaTh>
-                        Direction: {trip.start_location.city} →{" "}
+                        Посока: {trip.start_location.city} →{" "}
                         {trip.end_location.city}
                       </MetaTh>
-                      <MetaTh>Departure: {trip.departure_datetime}</MetaTh>
+                      <MetaTh>Дата: {trip.departure_datetime}</MetaTh>
                     </DetailsContainer>
                   </Card>
                 ))
               ) : (
-                <EmptyTextTh>No hosted trips found.</EmptyTextTh>
+                <EmptyTextTh>Не са намерени.</EmptyTextTh>
               )}
             </>
           )}
 
           {/* Participated Trips */}
-          <SectionTitleTH>Trips You've Participated In</SectionTitleTH>
+          <SectionTitleTH>Пътувания, в които съм участвал</SectionTitleTH>
           <Line></Line>
           {joinedTrips.length > 0 ? (
             joinedTrips.map((trip) => (
@@ -130,7 +132,7 @@ const TripHistory = ({ route }) => {
               </Card>
             ))
           ) : (
-            <EmptyTextTh>No participated trips found.</EmptyTextTh>
+            <EmptyTextTh>Не са намерени.</EmptyTextTh>
           )}
         </>
       )}
@@ -141,7 +143,7 @@ const TripHistory = ({ route }) => {
 const styles = StyleSheet.create({
   container: {
     padding: 15,
-    paddingTop: 70,
+    paddingTop: 0,
     backgroundColor: "#f9f9f9",
   },
 });

@@ -1,18 +1,39 @@
-import React from 'react';
-import { View, ActivityIndicator } from 'react-native';
-import { InfoText, EmphasizeText, InlineGroup, TextLink, TextLinkContent, Colors } from '../components/styles';
+import React from "react";
+import { ActivityIndicator, View } from "react-native";
+import {
+  Colors,
+  EmphasizeText,
+  InfoText,
+  InlineGroup,
+  TextLink,
+  TextLinkContent,
+} from "../components/styles";
 
 const { brand } = Colors;
 
-const ResendTimer = ({ activeResend, resendEmail, resendingEmail, resendStatus, timeLeft, targetTime }) => {
+const ResendTimer = ({
+  activeResend,
+  resendEmail,
+  resendingEmail,
+  resendStatus,
+  timeLeft,
+  targetTime,
+}) => {
   return (
     <View>
       <InlineGroup>
-        <InfoText>Didn't receive the email? </InfoText>
+        <InfoText>Не получи имейл? </InfoText>
 
         {!resendingEmail && (
-          <TextLink style={{ opacity: !activeResend && 0.5 }} disabled={!activeResend} onPress={resendEmail}>
-            <TextLinkContent resendStatus={resendStatus} style={{ textDecorationLine: 'underline' }}>
+          <TextLink
+            style={{ opacity: !activeResend && 0.5 }}
+            disabled={!activeResend}
+            onPress={resendEmail}
+          >
+            <TextLinkContent
+              resendStatus={resendStatus}
+              style={{ textDecorationLine: "underline" }}
+            >
               {resendStatus}
             </TextLinkContent>
           </TextLink>

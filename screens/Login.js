@@ -145,7 +145,7 @@ const Login = ({ navigation, route }) => {
       if (statusText !== "SUCCESS") {
         handleMessage(message, "FAILED");
       } else {
-        handleMessage("Login successful!", "SUCCESS");
+        handleMessage("Успешно вписване!", "SUCCESS");
 
         /* Save token to AsyncStorage */
         await AsyncStorage.setItem("token", token);
@@ -158,9 +158,9 @@ const Login = ({ navigation, route }) => {
       setSubmitting(false);
 
       if (error.response?.status !== 200) {
-        handleMessage(error.response?.data?.message || "Login failed");
+        handleMessage(error.response?.data?.message || "Неуспешно вписване");
       } else {
-        handleMessage("Network error. Please try again.", "FAILED");
+        handleMessage("Проблем с мрежата. Опитай отново.", "FAILED");
       }
     } finally {
       setSubmitting(false);
@@ -181,15 +181,15 @@ const Login = ({ navigation, route }) => {
             resizeMode="cover"
             source={require("./../assets/images/logoNew.png")}
           />
-          <PageTitle>Travel Sharing</PageTitle>
-          <SubTitle>Account Login</SubTitle>
+          <PageTitle>TravelBuddy</PageTitle>
+          <SubTitle>Вход в акаунта</SubTitle>
 
           <Formik
             initialValues={{ email: route?.params?.email, password: "" }}
             enableReinitialize={true}
             onSubmit={(values, { setSubmitting }) => {
               if (values.email === "" || values.password === "") {
-                handleMessage("Please fill all fields!");
+                handleMessage("Моля попълни всички полета!");
                 setSubmitting(false);
               } else {
                 handleLogin(values, setSubmitting);
@@ -205,7 +205,7 @@ const Login = ({ navigation, route }) => {
             }) => (
               <StyledFormArea>
                 <MyTextInput
-                  label="Email Address"
+                  label="Имейл адрес"
                   icon="mail"
                   placeholder="example@gmail.com"
                   placeholderTextColor={darkLight}
@@ -215,7 +215,7 @@ const Login = ({ navigation, route }) => {
                   keyboardType="email-address"
                 />
                 <MyTextInput
-                  label="Password"
+                  label="Парола"
                   icon="lock"
                   placeholder="* * * * * * * *"
                   placeholderTextColor={darkLight}
@@ -231,7 +231,7 @@ const Login = ({ navigation, route }) => {
 
                 {!isSubmitting ? (
                   <StyledButton onPress={handleSubmit}>
-                    <ButtonText>Login</ButtonText>
+                    <ButtonText>Вход</ButtonText>
                   </StyledButton>
                 ) : (
                   <StyledButton disabled={true}>
@@ -270,7 +270,9 @@ const Login = ({ navigation, route }) => {
                       source={require("./../assets/images/google-logo.png")}
                       style={{ width: 40, height: 40 }}
                     />
-                    <ButtonText google={true}>Sign in with Google</ButtonText>
+                    <ButtonText google={true}>
+                      Вход чрез Google акаунт
+                    </ButtonText>
                   </StyledButton>
                 ) : (
                   <StyledButton google={true} disabled={true}>
@@ -279,9 +281,9 @@ const Login = ({ navigation, route }) => {
                 )}
 
                 <ExtraView>
-                  <ExtraText>Don't have an account already? </ExtraText>
+                  <ExtraText>Все още нямаш регистрация? </ExtraText>
                   <TextLink onPress={() => navigation.navigate("Signup")}>
-                    <TextLinkContent>Signup</TextLinkContent>
+                    <TextLinkContent>Регистрация</TextLinkContent>
                   </TextLink>
                 </ExtraView>
               </StyledFormArea>

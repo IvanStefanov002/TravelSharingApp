@@ -265,6 +265,7 @@ export const WelcomeText = styled.Text`
 `;
 
 export const StatCardsContainer = styled.View`
+  display: flex;
   flex-direction: row;
   justify-content: space-between;
   margin-bottom: 20px;
@@ -274,8 +275,10 @@ export const StatCard = styled.View`
   flex: 1;
   background-color: #6d28d9;
   margin-right: 10px;
-  padding: 15px;
-  border-radius: 12px;
+  padding: 10px;
+  border-radius: 35px;
+  justify-content: center;
+  align-items: center; /* Центриране по хоризонтала */
 `;
 
 export const StatText = styled.Text`
@@ -750,7 +753,7 @@ export const MoreContainer = styled.View`
 
 export const ContactInfoContainer = styled.View`
   margin-top: 20px;
-  margin-bottom: 80px;
+  margin-bottom: 260px;
   padding: 16px;
   background-color: #f9fafb;
   border-radius: 12px;
@@ -925,7 +928,7 @@ export const Button = styled.TouchableOpacity`
 
 /* AboutVehicle screen designs */
 export const VehicleContainer = styled.View`
-  margin-top: 80px;
+  margin-top: 0px;
   padding: 20px;
   background-color: ${primary};
 `;

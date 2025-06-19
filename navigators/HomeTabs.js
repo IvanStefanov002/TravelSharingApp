@@ -69,20 +69,21 @@ const HomeTabs = ({ route }) => {
       <StatusBar style={primary} hidden={false} />
       <Tab.Navigator
         screenOptions={({ route }) => ({
+          //keyboardHidesTabBar: true, // <-- добави това!
           tabBarIcon: ({ color, size, focused }) => {
             let iconName;
 
             switch (route.name) {
-              case "Home":
+              case "Начало":
                 iconName = focused ? "home" : "home-outline";
                 break;
-              case "Trips":
+              case "Пътувания":
                 iconName = focused ? "trail-sign" : "trail-sign-outline";
                 break;
-              case "Profile":
+              case "Профил":
                 iconName = focused ? "person" : "person-outline";
                 break;
-              case "More":
+              case "Още":
                 iconName = focused ? "options" : "options-outline";
                 break;
               default:
@@ -113,16 +114,16 @@ const HomeTabs = ({ route }) => {
           headerTintColor: "#ca8a04",
           headerTransparent: false,
           headerTitle: () => {
-            if (route.name === "More") {
+            if (route.name === "Още") {
               return (
                 <Text style={{ fontSize: 20, fontWeight: "600" }}>
-                  Additional Information
+                  Допълнителна информация
                 </Text>
               );
-            } else if (route.name === "Profile") {
+            } else if (route.name === "Профил") {
               return (
                 <Text style={{ fontSize: 20, fontWeight: "600" }}>
-                  Profile Settings
+                  Настройки на профила
                 </Text>
               );
               // } else if (route.name === "Trips") {
@@ -147,14 +148,12 @@ const HomeTabs = ({ route }) => {
           },
 
           headerTitleAlign:
-            route.name === "More" || route.name === "Profile"
-              ? "center"
-              : "left",
+            route.name === "Още" || route.name === "Профил" ? "center" : "left",
           headerStyle: styles.headerStyle /* to get rid of the header in iOS */,
         })}
       >
         <Tab.Screen
-          name="Home"
+          name="Начало"
           component={Home}
           initialParams={{
             id,
@@ -171,7 +170,7 @@ const HomeTabs = ({ route }) => {
         />
 
         <Tab.Screen
-          name="Trips"
+          name="Пътувания"
           component={Trips}
           initialParams={{
             id,
@@ -189,7 +188,7 @@ const HomeTabs = ({ route }) => {
         />
 
         <Tab.Screen
-          name="Profile"
+          name="Профил"
           component={Profile}
           initialParams={{
             id,
@@ -211,7 +210,7 @@ const HomeTabs = ({ route }) => {
         />
 
         <Tab.Screen
-          name="More"
+          name="Още"
           component={More}
           options={{
             headerStyle: {
@@ -231,7 +230,7 @@ const styles = StyleSheet.create({
   tabBarStyle: {
     height: 70,
     backgroundColor: "#fefce8",
-    position: "absolute",
+    //position: "absolute",
     bottom: 10,
     left: 30,
     right: 30,

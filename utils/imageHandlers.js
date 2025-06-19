@@ -43,11 +43,11 @@ export const pickImageCar = async (
       const updatedVehicle = { ...vehicle, imageUrl: uploadedImageUrl };
       onVehicleUpdated(updatedVehicle);
     } else {
-      Alert.alert("You did not select any image.");
+      Alert.alert("Не избра никаква снимка.");
     }
   } catch (error) {
     console.error("Error picking image:", error);
-    Alert.alert("An error occurred while picking the image.");
+    Alert.alert("Появи се грешка при избирането на снимка.");
     return false;
   }
 
@@ -58,12 +58,12 @@ export const pickImageCar = async (
  * Handles picking a new image and uploading it.
  */
 export const pickImage = async (
-  setVehicleInfo,
+  user,
+  setUser,
   route,
   setMessage,
   setMessageType
 ) => {
-  console.log("PickImage start...");
   try {
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
@@ -72,27 +72,29 @@ export const pickImage = async (
 
     if (!result.canceled) {
       const imageUrl = result.assets[0].uri;
-      setVehicleInfo((prev) => ({ ...prev, imageUrl }));
 
-      await uploadImageToServer(
+      const uploadedImageUrl = await uploadImageToServer(
         imageUrl,
         "",
         route?.params?.email,
         setMessage,
         setMessageType,
-        setVehicleInfo
+        setUser
       );
+
+      if (uploadedImageUrl) {
+        user.imageUrl = uploadedImageUrl;
+        return uploadedImageUrl; // Return uploaded URL here
+      }
     } else {
-      Alert.alert("You did not select any image.");
+      Alert.alert("Не избра никаква снимка.");
+      return null;
     }
   } catch (error) {
     console.error("Error picking image:", error);
-    Alert.alert("An error occurred while picking the image.");
-
-    return false;
+    Alert.alert("Появи се грешка при избирането на снимка.");
+    return null;
   }
-
-  return true;
 };
 
 export const pickImageTrip = async (
@@ -122,11 +124,11 @@ export const pickImageTrip = async (
         vehicle_image: imageUri,
       }));
     } else {
-      Alert.alert("You did not select any image.");
+      Alert.alert("Не избра никаква снимка.");
     }
   } catch (error) {
     console.error("Error picking image:", error);
-    Alert.alert("An error occurred while picking the image.");
+    Alert.alert("Появи се грешка докато избираше снимка.");
   }
 };
 
@@ -164,11 +166,11 @@ export const changeImage = async (
 
       vehicleInfo.imageUrl = uploadedImageUrl;
     } else {
-      Alert.alert("You did not select any image.");
+      Alert.alert("Не избра никаква снимка.");
     }
   } catch (error) {
     console.error("Error changing image:", error);
-    Alert.alert("An error occurred while changing the image.");
+    Alert.alert("Грешка при смяната на снимка.");
 
     return false;
   }
@@ -208,11 +210,11 @@ export const changeImageCar = async (
 
       vehicleInfo.imageUrl = uploadedImageUrl;
     } else {
-      Alert.alert("You did not select any image.");
+      Alert.alert("Не избра никаква снимка.");
     }
   } catch (error) {
     console.error("Error changing image:", error);
-    Alert.alert("An error occurred while changing the image.");
+    Alert.alert("Грешка при смяната на снимка.");
 
     return false;
   }

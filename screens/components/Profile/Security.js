@@ -34,6 +34,16 @@ const Security = ({ route, navigation }) => {
   const [newPassword, setNewPassword] = useState("");
 
   const handleChangeEmail = async () => {
+    if (!newEmail) {
+      Alert.alert("Грешка!", "Моля, въведете нов имейл адрес.");
+      return;
+    }
+
+    if (route.params.email?.toLowerCase() === newEmail?.toLowerCase()) {
+      Alert.alert("Грешка!", "Текущият и новият имейл адрес съвпадат!");
+      return;
+    }
+
     const url = `${baseAPIUrl}/users/changeEmail`;
 
     try {
@@ -47,12 +57,12 @@ const Security = ({ route, navigation }) => {
       if (statusText !== "SUCCESS") {
         handleMessage(message, "FAILED");
       } else {
-        handleMessage("Your email has been successfully updated.", "SUCCESS");
+        handleMessage("Имейл адресът беше успешно променен.", "SUCCESS");
 
         // After successful email change, navigate to the Login screen
         Alert.alert(
-          "Please log in again",
-          "Your email has been updated. Please log in with your new email.",
+          "Моля впишете се отново!",
+          "Вашият имейл беше актуализиран. Моля, влезте с новия имейл.",
           [
             {
               text: "OK",
@@ -66,9 +76,9 @@ const Security = ({ route, navigation }) => {
       }
     } catch (error) {
       Alert.alert(
-        "Error",
+        "Грешка",
         error.response?.data?.message ||
-          "An error occurred while updating your password."
+          "Възникна грешка при актуализирането на паролата ви."
       );
     }
   };
@@ -76,8 +86,8 @@ const Security = ({ route, navigation }) => {
   const handleChangePassword = async () => {
     if (!oldPassword || !newPassword) {
       Alert.alert(
-        "Error",
-        "Please fill in both the current and new passwords."
+        "Грешка",
+        "Моля, въведете както настоящата, така и новата парола."
       );
       return;
     }
@@ -95,7 +105,7 @@ const Security = ({ route, navigation }) => {
 
       if (statusText !== "SUCCESS") {
         handleMessage(message, "FAILED");
-        Alert.alert("Error", message);
+        Alert.alert("Грешка", message);
       } else {
         handleMessage(
           "Your password has been successfully updated.",
@@ -103,25 +113,21 @@ const Security = ({ route, navigation }) => {
         );
 
         // After successful password change, log the user out and ask to log in again
-        Alert.alert(
-          "Please log in again",
-          "Your password has been updated. Please log in with your new password.",
-          [
-            {
-              text: "OK",
-              onPress: () => {
-                // Call resetLoginScreen to reset the navigation stack and go to Login
-                resetLoginScreen(navigation);
-              },
+        Alert.alert("Моля впишете се отново", "Вашата парола беше обновена!", [
+          {
+            text: "OK",
+            onPress: () => {
+              // Call resetLoginScreen to reset the navigation stack and go to Login
+              resetLoginScreen(navigation);
             },
-          ]
-        );
+          },
+        ]);
       }
     } catch (error) {
       Alert.alert(
-        "Error",
+        "Грешка",
         error.response?.data?.message ||
-          "An error occurred while updating your password."
+          "Появи се грешка докато се обновяваше паролата!."
       );
     }
   };
@@ -133,17 +139,17 @@ const Security = ({ route, navigation }) => {
         <Section>
           <TitleRow>
             <Ionicons name="mail-outline" size={20} color="#6d28d9" />
-            <SectionTitle>Change Email</SectionTitle>
+            <SectionTitle>Смяна на имейл адрес</SectionTitle>
           </TitleRow>
-          <SectionNote>Note: Use only lower case.</SectionNote>
+          <SectionNote>Забележка: Използвайте само малки букви.</SectionNote>
           <Input
-            placeholder="New Email"
+            placeholder="Нов имейл адрес"
             keyboardType="email-address"
             value={newEmail}
             onChangeText={setEmail}
           />
           <Button onPress={handleChangeEmail}>
-            <ButtonText>Update Email</ButtonText>
+            <ButtonText>Промени имейл адрес</ButtonText>
           </Button>
         </Section>
 
@@ -151,25 +157,25 @@ const Security = ({ route, navigation }) => {
         <Section>
           <TitleRow>
             <Ionicons name="lock-closed-outline" size={20} color="#6d28d9" />
-            <SectionTitle>Change Password</SectionTitle>
+            <SectionTitle>Смяна на парола</SectionTitle>
           </TitleRow>
           <SectionNote>
-            Note: Password must be at least 8 characters.
+            Забележка: Паролата трябва да е поне 8 символа.
           </SectionNote>
           <Input
-            placeholder="Current Password"
+            placeholder="Настояща парола"
             secureTextEntry
             value={oldPassword}
             onChangeText={setOldPassword}
           />
           <Input
-            placeholder="New Password"
+            placeholder="Нова парола"
             secureTextEntry
             value={newPassword}
             onChangeText={setNewPassword}
           />
           <Button onPress={handleChangePassword}>
-            <ButtonText>Update Password</ButtonText>
+            <ButtonText>Промени паролата</ButtonText>
           </Button>
         </Section>
       </SecurityContainer>

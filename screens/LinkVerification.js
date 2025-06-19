@@ -1,33 +1,33 @@
-import React, { useEffect, useState } from 'react';
-import { StatusBar } from 'expo-status-bar';
 import {
   BottomHalf,
+  ButtonText,
+  Colors,
+  EmphasizeText,
   IconBg,
+  InfoText,
+  PageTitle,
+  StyledButton,
   StyledContainer,
   TopHalf,
-  Colors,
-  PageTitle,
-  InfoText,
-  EmphasizeText,
-  StyledButton,
-  ButtonText,
-} from '@/components/styles';
+} from "@/components/styles";
+import { StatusBar } from "expo-status-bar";
+import React, { useEffect, useState } from "react";
 
-import { Octicons, Ionicons } from '@expo/vector-icons';
+import { Ionicons, Octicons } from "@expo/vector-icons";
 
-import ResendTimer from './../components/ResendTimer';
+import ResendTimer from "./../components/ResendTimer";
 
 /* api client */
-import axios from 'axios';
+import axios from "axios";
 
 /* api route */
-import { baseAPIUrl } from '../components/shared';
+import { baseAPIUrl } from "../components/shared";
 
 const { brand, primary, green } = Colors;
 
 const Verification = ({ navigation, route }) => {
   const [resendingEmail, setResendingEmail] = useState(false);
-  const [resendStatus, setResendStatus] = useState('Resend');
+  const [resendStatus, setResendStatus] = useState("Resend");
 
   /* resend timer */
   const [timeLeft, setTimeLeft] = useState(null);
@@ -39,7 +39,8 @@ const Verification = ({ navigation, route }) => {
   const { email, userId } = route?.params;
 
   const calculateTimeLeft = (finalTime) => {
-    const difference = finalTime - +new Date(); /* + converts the Date value to integer */
+    const difference =
+      finalTime - +new Date(); /* + converts the Date value to integer */
     if (difference >= 0) {
       setTimeLeft(Math.round(difference / 1000));
     } else {
@@ -65,16 +66,16 @@ const Verification = ({ navigation, route }) => {
 
     try {
       await axios.post(url, { email, userId });
-      setResendStatus('Sent!');
+      setResendStatus("Sent!");
     } catch (error) {
-      setResendStatus('Failed!');
+      setResendStatus("Failed!");
       alert(`Resending email failed! ${error.message}`);
     }
     setResendingEmail(false);
 
     /* hold on message */
     setTimeout(() => {
-      setResendStatus('Resend');
+      setResendStatus("Resend");
       setActiveResend(false);
       triggerTimer();
     }, 5000);
@@ -84,13 +85,15 @@ const Verification = ({ navigation, route }) => {
     setTargetTime(targetTimeInSeconds);
     setActiveResend(false);
     const finalTime = +new Date() + targetTimeInSeconds * 1000;
-    resendTimerInterval = setInterval(() => (calculateTimeLeft(finalTime), 1000));
+    resendTimerInterval = setInterval(
+      () => (calculateTimeLeft(finalTime), 1000)
+    );
   };
 
   return (
     <StyledContainer
       style={{
-        alignItems: 'center',
+        alignItems: "center",
       }}
     >
       <TopHalf>
@@ -100,17 +103,17 @@ const Verification = ({ navigation, route }) => {
         </IconBg>
       </TopHalf>
       <BottomHalf>
-        <PageTitle style={{ fontSize: 25 }}>Account Verification</PageTitle>
+        <PageTitle style={{ fontSize: 25 }}>Валидиране на акаунт</PageTitle>
         <InfoText>
-          Please verify your email using the link sent to
+          Моля, потвърдете имейла си чрез връзката, изпратена на
           <EmphasizeText>{` ${email}`}</EmphasizeText>
         </InfoText>
 
         <StyledButton
-          onPress={() => navigation.navigate('Login', { email: email })}
-          style={{ backgroundColor: green, flexDirection: 'row' }}
+          onPress={() => navigation.navigate("Login", { email: email })}
+          style={{ backgroundColor: green, flexDirection: "row" }}
         >
-          <ButtonText>Proceed </ButtonText>
+          <ButtonText>Продължи </ButtonText>
           <Ionicons name="arrow-forward-circle" size={25} color={primary} />
         </StyledButton>
         <ResendTimer

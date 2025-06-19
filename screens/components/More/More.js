@@ -42,9 +42,13 @@ export default function More() {
   };
 
   const sections = [
-    { id: "faq", title: "Help / FAQ", content: helpFaqText },
-    { id: "privacy", title: "Privacy Policy", content: privacyPolicyText },
-    { id: "about", title: "About the App", content: aboutAppText },
+    { id: "faq", title: "Помощ / ЧЗВ", content: helpFaqText },
+    {
+      id: "privacy",
+      title: "Политика за поверителност",
+      content: privacyPolicyText,
+    },
+    { id: "about", title: "За приложението", content: aboutAppText },
   ];
 
   return (
@@ -110,7 +114,7 @@ export default function More() {
               marginBottom: 16,
             }}
           >
-            Customer Support
+            Обслужване на клиенти
           </Text>
 
           <ContactRowStyle>

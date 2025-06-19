@@ -86,7 +86,7 @@ const Signup = ({ navigation }) => {
         handleMessage(message, "FAILED");
       } else {
         /* Successful login, navigate to Verification page */
-        handleMessage("Login successful!", "SUCCESS");
+        handleMessage("Успешна регистрация!", "SUCCESS");
         navigation.navigate("Verification", { ...data });
       }
     } catch (error) {
@@ -108,10 +108,7 @@ const Signup = ({ navigation }) => {
       if (error.response.status !== 200) {
         handleMessage(error.response.data.message);
       } else {
-        handleMessage(
-          "An error occurred. Check your network and try again!",
-          "FAILED"
-        );
+        handleMessage("Проблем с мрежата, опитай по-късно!", "FAILED");
       }
     } finally {
       setSubmitting(false);
@@ -128,8 +125,8 @@ const Signup = ({ navigation }) => {
       <StyledContainer>
         <StatusBar style="dark" />
         <InnerContainer>
-          <PageTitle>Travel Sharing</PageTitle>
-          <SubTitle>Account Signup</SubTitle>
+          <PageTitle>TravelBuddy</PageTitle>
+          <SubTitle>Създаване на акаунт</SubTitle>
 
           {show && (
             <DateTimePicker
@@ -161,10 +158,10 @@ const Signup = ({ navigation }) => {
                 values.dateOfBirth == "" ||
                 values.confirmPassword == ""
               ) {
-                handleMessage("Please fill all fields!");
+                handleMessage("Моля попълни всички полета!");
                 setSubmitting(false);
               } else if (values.password !== values.confirmPassword) {
-                handleMessage("Passwords do not match!");
+                handleMessage("Паролите не съвпадат!");
                 setSubmitting(false);
               } else {
                 handleSignup(values, setSubmitting);
@@ -180,7 +177,7 @@ const Signup = ({ navigation }) => {
             }) => (
               <StyledFormArea>
                 <MyTextInput
-                  label="Full Name"
+                  label="Имена"
                   icon="person"
                   placeholder="Ivan Ivanov"
                   placeholderTextColor={darkLight}
@@ -190,7 +187,7 @@ const Signup = ({ navigation }) => {
                 />
 
                 <MyTextInput
-                  label="Email Adress"
+                  label="Имейл адрес"
                   icon="mail"
                   placeholder="andyj@gmail.com"
                   placeholderTextColor={darkLight}
@@ -201,7 +198,7 @@ const Signup = ({ navigation }) => {
                 />
 
                 <MyTextInput
-                  label="Phone Number"
+                  label="Телефонен номер"
                   icon="device-mobile"
                   placeholder="0891234567"
                   placeholderTextColor={darkLight}
@@ -212,7 +209,7 @@ const Signup = ({ navigation }) => {
                 />
 
                 <MyTextInput
-                  label="Date of birth"
+                  label="Дата на раждане"
                   icon="calendar"
                   placeholder="YYYY - MM -- DD"
                   placeholderTextColor={darkLight}
@@ -225,7 +222,7 @@ const Signup = ({ navigation }) => {
                 />
 
                 <MyTextInput
-                  label="Password"
+                  label="Парола"
                   icon="lock"
                   placeholder="* * * * * * * *"
                   placeholderTextColor={darkLight}
@@ -239,7 +236,7 @@ const Signup = ({ navigation }) => {
                 />
 
                 <MyTextInput
-                  label="Confirm Password"
+                  label="Потвърди парола"
                   icon="lock"
                   placeholder="* * * * * * * *"
                   placeholderTextColor={darkLight}
@@ -256,7 +253,7 @@ const Signup = ({ navigation }) => {
 
                 {!isSubmitting && (
                   <StyledButton onPress={handleSubmit}>
-                    <ButtonText>Signup</ButtonText>
+                    <ButtonText>Регистрация</ButtonText>
                   </StyledButton>
                 )}
 
@@ -268,13 +265,13 @@ const Signup = ({ navigation }) => {
 
                 <Line />
                 <ExtraView>
-                  <ExtraText>Already have an account? </ExtraText>
+                  <ExtraText>Вече имаш регистрация? </ExtraText>
                   <TextLink
                     onPress={() => {
                       resetLoginScreen(navigation);
                     }}
                   >
-                    <TextLinkContent>Login</TextLinkContent>
+                    <TextLinkContent>Вписване</TextLinkContent>
                   </TextLink>
                 </ExtraView>
               </StyledFormArea>

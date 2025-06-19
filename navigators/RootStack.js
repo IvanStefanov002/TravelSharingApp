@@ -33,7 +33,7 @@ const RootStack = () => {
           screenOptions={{
             headerStyle: { backgroundColor: "transparent" },
             headerTintColor: tertiary,
-            headerTransparent: true,
+            //headerTransparent: true,
             /* headerTitle: "", */
             headerLeftContainerStyle: { paddingLeft: 20 },
           }}
@@ -42,12 +42,20 @@ const RootStack = () => {
           <Stack.Screen
             name="Login"
             component={Login}
-            options={{ title: "" }}
+            options={{
+              title: "",
+              //statusBarTranslucent: true,
+              headerTransparent: true,
+            }}
           />
           <Stack.Screen
             name="Signup"
             component={Signup}
-            options={{ title: "" }}
+            options={{
+              title: "",
+              //statusBarTranslucent: true,
+              headerTransparent: true,
+            }}
           />
 
           <Stack.Screen
@@ -66,13 +74,17 @@ const RootStack = () => {
             }}
           />
 
-          <Stack.Screen name="Verification" component={Verification} />
+          <Stack.Screen
+            name="Verification"
+            component={Verification}
+            options={{ title: "", headerTransparent: true }}
+          />
 
           <Stack.Screen
             name="Security"
             component={Security}
             options={{
-              title: "Security Settings",
+              title: "Настройки за сигурност",
               headerTintColor: "black",
               headerStyle: {
                 backgroundColor: "#facc15",
@@ -84,7 +96,7 @@ const RootStack = () => {
             name="TripHistory"
             component={TripHistory}
             options={{
-              title: "Your trips overview",
+              title: "История на пътуванията",
               headerTintColor: "black",
               headerStyle: {
                 backgroundColor: "#facc15",
@@ -97,7 +109,7 @@ const RootStack = () => {
             name="AboutVehicle"
             component={AboutVehicle}
             options={{
-              title: "Vehicle Information",
+              title: "Моите превозни средства",
               statusBarStyle: "auto",
               headerStyle: {
                 backgroundColor: "#facc15",

@@ -35,6 +35,7 @@ export default function Profile({ navigation, route }) {
   const [modalVisible, setModalVisible] = useState(false);
   const [message, setMessage] = useState("");
   const [messageType, setMessageType] = useState("");
+  const [newImage, setNewImage] = useState("");
 
   const [user, setUser] = useState({
     id: id,
@@ -83,7 +84,7 @@ export default function Profile({ navigation, route }) {
           roles: selectedRoles,
         };
 
-        Alert.alert("Success", "Your roles were updated!", [
+        Alert.alert("Успех", "Вашите роли са актуализирани!", [
           {
             text: "OK",
             onPress: () => {
@@ -95,10 +96,10 @@ export default function Profile({ navigation, route }) {
           },
         ]);
       } else {
-        Alert.alert("Failed to update roles");
+        Alert.alert("Неуспешно обновяване на ролите!");
       }
     } catch (error) {
-      Alert.alert("Error updating roles");
+      Alert.alert("Грешка при обновяване на ролите!");
     }
   };
 
@@ -108,19 +109,19 @@ export default function Profile({ navigation, route }) {
     let result;
 
     if (!isImageSet) {
-      result = await pickImage(
-        (newUri) => {
-          if (newUri) {
-            setUser((prev) => ({
-              ...prev,
-              imageUrl: newUri,
-            }));
-          }
-        },
+      const uploadedUrl = await pickImage(
+        user,
+        setUser,
         route,
         setMessage,
         setMessageType
       );
+
+      if (uploadedUrl) {
+        setUser((prev) => ({ ...prev, imageUrl: uploadedUrl }));
+      }
+
+      result = !!uploadedUrl;
     } else {
       result = await changeImage(
         user,
@@ -133,28 +134,29 @@ export default function Profile({ navigation, route }) {
 
     setModalVisible(false);
 
-    const data = [
-      {
-        email: user.email,
-        id: user.id,
-        name: user.name,
-        profileImage: user.imageUrl,
-        rating: 0,
-        ratingsCount: 0,
-        roles: user.roles,
-      },
-    ];
+    const updatedUser = {
+      email: user.email,
+      id: user.id,
+      name: user.name,
+      profileImage: user.imageUrl,
+      rating: 0,
+      ratingsCount: 0,
+      roles: user.roles,
+    };
 
-    /* Navigate to Homescreen( HomeTabs ) and pass parameters for the custom header to reload */
+    console.log(`result`, result);
+    console.log(`updatedUser`, updatedUser);
+
     if (result) {
-      navigation.navigate("HomeTabs", { ...data[0] });
+      console.log(`navigating....`);
+      navigation.navigate("HomeTabs", updatedUser);
     }
   };
 
   const menuItems = [
     {
       id: "1",
-      label: !isImageSet ? "Add profile picture" : "Change profile picture",
+      label: !isImageSet ? "Добави профилна снимка" : "Промени профилна снимка",
       icon: "image-outline",
       onPress: () => {
         setModalVisible(true); // opens modal
@@ -163,7 +165,7 @@ export default function Profile({ navigation, route }) {
 
     {
       id: "2",
-      label: "Security",
+      label: "Сигурност",
       icon: "shield-outline",
       onPress: () => {
         navigation.navigate("Security", { email: user.email });
@@ -171,7 +173,7 @@ export default function Profile({ navigation, route }) {
     },
     {
       id: "5",
-      label: "Logout",
+      label: "Отписване",
       icon: "log-out-outline",
       onPress: () => {
         resetLoginScreen(navigation);
@@ -182,7 +184,7 @@ export default function Profile({ navigation, route }) {
   if (user.roles.includes("passenger") || user.roles.includes("driver")) {
     menuItems.splice(1, 0, {
       id: "4",
-      label: "Trip History",
+      label: "История на пътуванията",
       icon: "time-outline",
       onPress: () => {
         navigation.navigate("TripHistory", { id: user.id, roles: user.roles });
@@ -194,7 +196,7 @@ export default function Profile({ navigation, route }) {
   if (user.roles.includes("driver")) {
     menuItems.splice(1, 0, {
       id: "3",
-      label: "About my vehicles",
+      label: "Моите превозни средства",
       icon: "car-sport-outline",
       onPress: () => {
         navigation.navigate("AboutVehicle", { email: user.email });
@@ -213,7 +215,7 @@ export default function Profile({ navigation, route }) {
 
         <ProfileRoleAndRatingContainer>
           <ProfileRole>
-            Role(s):{" "}
+            Роля/и:{" "}
             <RoleColoredText>{selectedRoles.join(" & ")}</RoleColoredText>
           </ProfileRole>
           <ProfileRoleButton onPress={() => setIsEditingRoles(!isEditingRoles)}>
@@ -255,7 +257,7 @@ export default function Profile({ navigation, route }) {
               <Text
                 style={{ fontSize: 16, fontWeight: 600, alignSelf: "center" }}
               >
-                Tip: Please, select a role!
+                Забележка: Моля, избери роля!
               </Text>
             </View>
           )}
@@ -298,12 +300,12 @@ export default function Profile({ navigation, route }) {
             <Text
               style={{ fontSize: 18, fontWeight: "bold", marginBottom: 20 }}
             >
-              Change Profile Picture
+              Промени профилна снимка
             </Text>
-            <Button title="Pick from Gallery" onPress={handlePickImage} />
+            <Button title="Избери от галерията" onPress={handlePickImage} />
             <View style={{ height: 10 }} />
             <Button
-              title="Cancel"
+              title="Отказ"
               color="red"
               onPress={() => setModalVisible(false)}
             />
