@@ -453,7 +453,7 @@ export default function TripDetails({ navigation }) {
                       source={{
                         uri:
                           `${baseAPIUrl}${user?.profile_image}` ??
-                          "https://via.placeholder.com/100x100.png?text=User",
+                          `${baseAPIUrl}/uploads/unknown.jpg`,
                       }}
                       style={{
                         width: 60,
@@ -594,7 +594,7 @@ export default function TripDetails({ navigation }) {
                     style={{ marginRight: 8 }}
                   />
                   <Text style={{ color: "#374151", fontSize: 14 }}>
-                    Not available
+                    Не е възможно
                   </Text>
                 </View>
               )}
